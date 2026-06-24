@@ -1,0 +1,437 @@
+Official GenForgeAI Mobile v1.0 Master Replit Build Prompt
+
+Part 1 — Executive Vision & Mission
+
+
+---
+
+PROJECT TITLE
+
+GenForgeAI Mobile v1.0
+
+Codename: Project Forge
+
+Platform:
+
+Android (Primary)
+
+iOS (Future)
+
+Tablet Support
+
+Foldable Support
+
+
+
+---
+
+PROJECT MISSION
+
+GenForgeAI Mobile is the world's first AI-powered game development studio that fits entirely in your pocket.
+
+The application enables anyone—from beginners to professional developers—to create complete, production-ready games using conversational AI, specialized AI agents, procedural generation, and automated asset pipelines.
+
+Unlike traditional game engines, GenForgeAI does not simply provide tools. It acts as an autonomous development team capable of planning, designing, generating, organizing, testing, and exporting an entire game project.
+
+The system should feel less like software and more like working with an experienced game studio.
+
+
+---
+
+PRIMARY GOALS
+
+The application must allow users to:
+
+Create complete games from prompts.
+
+Continue existing projects.
+
+Modify generated content.
+
+Regenerate individual systems.
+
+Collaborate with AI agents.
+
+Export complete projects.
+
+Manage unlimited game projects.
+
+Work from mobile devices.
+
+Synchronize with cloud services.
+
+Eventually publish directly to supported engines and platforms.
+
+
+
+---
+
+CORE PHILOSOPHY
+
+Every feature should answer one question:
+
+> "Does this make creating games dramatically easier?"
+
+
+
+If not, it does not belong.
+
+
+---
+
+TARGET USERS
+
+Beginner
+
+No coding knowledge.
+
+Needs:
+
+Guided workflow
+
+AI assistance
+
+Templates
+
+Tutorials
+
+
+
+---
+
+Indie Developer
+
+Needs:
+
+Faster production
+
+Asset generation
+
+Story generation
+
+Level generation
+
+
+
+---
+
+Professional Studio
+
+Needs:
+
+Automation
+
+Pipelines
+
+Collaboration
+
+Versioning
+
+Export support
+
+
+
+---
+
+Content Creator
+
+Needs:
+
+Prototype ideas quickly
+
+Create game concepts
+
+Build playable demos
+
+
+
+---
+
+DESIGN PRINCIPLES
+
+The UI should be:
+
+Fast
+
+Clean
+
+Modern
+
+Dark Mode First
+
+Minimalistic
+
+Easy to navigate
+
+Animated
+
+Responsive
+
+
+Every interaction should feel premium.
+
+
+---
+
+VISUAL STYLE
+
+Colors:
+
+Primary:
+
+Electric Blue
+
+
+Secondary:
+
+Purple
+
+
+Accent:
+
+Cyan
+
+
+Background:
+
+Near Black
+
+
+Success:
+
+Green
+
+
+Warning:
+
+Orange
+
+
+Error:
+
+Red
+
+
+Cards:
+
+Rounded corners
+
+
+Animations:
+
+Smooth
+
+Material You inspired
+
+60 FPS
+
+
+
+---
+
+APPLICATION STRUCTURE
+
+Main Navigation
+
+1. Home
+
+
+2. AI Chat
+
+
+3. Projects
+
+
+4. Assets
+
+
+5. Marketplace
+
+
+6. Community
+
+
+7. Notifications
+
+
+8. Profile
+
+
+9. Settings
+
+
+
+Bottom navigation should always remain accessible.
+
+
+---
+
+HOME DASHBOARD
+
+Displays:
+
+Continue Project
+
+Recent Projects
+
+AI Suggestions
+
+Quick Generate
+
+Daily Tips
+
+Storage Usage
+
+Cloud Sync Status
+
+Export Queue
+
+AI Activity
+
+News
+
+
+
+---
+
+QUICK ACTIONS
+
+Buttons:
+
+Create Game
+
+Continue Game
+
+Import Project
+
+Export Project
+
+Generate Assets
+
+Open AI Chat
+
+Marketplace
+
+Community
+
+
+---
+
+USER EXPERIENCE
+
+Maximum taps to begin generating a game:
+
+3
+
+Maximum loading screen:
+
+3 seconds
+
+All AI responses should stream in real time.
+
+Users should always know what the AI is doing.
+
+Example:
+
+✓ Building World
+
+✓ Creating Story
+
+✓ Designing Enemies
+
+✓ Balancing Combat
+
+✓ Creating Skill Trees
+
+✓ Building Levels
+
+✓ Generating Pixel Art
+
+✓ Creating Soundtrack
+
+✓ Packaging Project
+
+
+---
+
+AI-FIRST EXPERIENCE
+
+Everything begins with AI.
+
+Instead of menus asking dozens of questions, the user simply types:
+
+> "Create a dark fantasy metroidvania with procedurally generated castles."
+
+
+
+The AI should determine:
+
+Story
+
+Art style
+
+Combat
+
+Skills
+
+Enemies
+
+Bosses
+
+Music
+
+Progression
+
+Economy
+
+Crafting
+
+Lore
+
+Maps
+
+Quests
+
+Dialogue
+
+UI
+
+Export settings
+
+
+automatically.
+
+
+---
+
+MASTER AI
+
+The application revolves around one central intelligence:
+
+Master Game Director
+
+Responsibilities:
+
+Understand the user's vision.
+
+Break work into tasks.
+
+Assign tasks to AI agents.
+
+Monitor progress.
+
+Resolve conflicts.
+
+Maintain design consistency.
+
+Ensure gameplay balance.
+
+Produce the final game package.
+
+
+The Master Game Director never creates content directly unless necessary. Instead, it coordinates specialized AI agents for each subsystem, ensuring a cohesive final product.
+
+
+---
+
+This completes Part 1 of the master specification. The next section will define the complete system architecture and the specialized AI agent network that powers GenForgeAI Mobile.
