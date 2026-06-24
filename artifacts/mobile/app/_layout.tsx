@@ -15,6 +15,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthProvider } from "@/context/AuthContext";
 import { ChatProvider } from "@/context/ChatContext";
 import { ProjectsProvider } from "@/context/ProjectsContext";
 
@@ -30,6 +31,7 @@ function RootLayoutNav() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: bg },
+        animation: "slide_from_right",
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -38,6 +40,14 @@ function RootLayoutNav() {
       <Stack.Screen name="marketplace" options={{ headerShown: false }} />
       <Stack.Screen name="community" options={{ headerShown: false }} />
       <Stack.Screen name="export-center" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="auth/login"
+        options={{ presentation: "modal", headerShown: false, animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
+        name="auth/register"
+        options={{ presentation: "modal", headerShown: false, animation: "slide_from_bottom" }}
+      />
     </Stack>
   );
 }
@@ -62,15 +72,17 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <ProjectsProvider>
-            <ChatProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </ChatProvider>
-          </ProjectsProvider>
+          <AuthProvider>
+            <ProjectsProvider>
+              <ChatProvider>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <KeyboardProvider>
+                    <RootLayoutNav />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </ChatProvider>
+            </ProjectsProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
