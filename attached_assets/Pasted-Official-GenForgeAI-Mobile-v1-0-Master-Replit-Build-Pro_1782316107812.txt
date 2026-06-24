@@ -1,0 +1,388 @@
+Official GenForgeAI Mobile v1.0 Master Replit Build Prompt
+
+Part 5 — Game Generation Pipeline, GenLogic Workflow & AI Production Pipeline
+
+
+---
+
+OVERVIEW
+
+The Game Generation Pipeline is the heart of GenForgeAI. It transforms a simple natural-language prompt into a complete, production-ready game by coordinating specialized AI agents under the supervision of the Master Game Director.
+
+Every generation must be deterministic when using the same seed and configuration, while allowing controlled randomness for replayability.
+
+
+---
+
+PHASE 1 — USER INPUT
+
+The user may provide:
+
+A natural-language prompt
+
+A structured template
+
+Genre selection
+
+Art style references
+
+Target game engine
+
+Target platform(s)
+
+Difficulty
+
+Game length
+
+Multiplayer options
+
+Accessibility requirements
+
+Optional reference images or documents
+
+
+Example prompt:
+
+> "Create a dark fantasy metroidvania with interconnected castles, spell-based combat, memorable bosses, and pixel art inspired by classic 16-bit games."
+
+
+
+
+---
+
+PHASE 2 — PROMPT ANALYSIS
+
+The GenLogic Engine extracts and classifies:
+
+Genre(s)
+
+Theme
+
+Tone
+
+Setting
+
+Core gameplay loop
+
+Progression style
+
+Art direction
+
+Audio direction
+
+Narrative goals
+
+Technical constraints
+
+Export targets
+
+Risks and ambiguities
+
+
+If essential information is missing, the AI asks concise follow-up questions or applies sensible defaults.
+
+
+---
+
+PHASE 3 — PROJECT BLUEPRINT
+
+The Master Game Director creates a Project Blueprint containing:
+
+Vision statement
+
+Design pillars
+
+Technical architecture
+
+Gameplay systems
+
+World outline
+
+Story outline
+
+Asset requirements
+
+Audio requirements
+
+Milestones
+
+AI task graph
+
+Estimated generation time
+
+
+This blueprint becomes the "source of truth" for the project.
+
+
+---
+
+PHASE 4 — TASK DECOMPOSITION
+
+The blueprint is divided into hundreds or thousands of discrete tasks.
+
+Example tasks:
+
+Generate world map
+
+Define biomes
+
+Write lore
+
+Create protagonist
+
+Generate enemies
+
+Balance combat
+
+Produce sprites
+
+Compose music
+
+Design UI
+
+Validate save system
+
+Package export
+
+
+Tasks include:
+
+Unique ID
+
+Dependencies
+
+Assigned AI agent
+
+Priority
+
+Estimated duration
+
+Validation criteria
+
+
+
+---
+
+PHASE 5 — PARALLEL AI EXECUTION
+
+Independent tasks run concurrently whenever possible.
+
+Examples:
+
+World Architect generates regions.
+
+Story Architect writes lore.
+
+Pixel Art Designer creates sprites.
+
+Audio Composer writes music.
+
+UI Designer builds interface mockups.
+
+Enemy Designer creates enemy families.
+
+
+The Master Game Director monitors progress and resolves conflicts.
+
+
+---
+
+PHASE 6 — CONTINUOUS VALIDATION
+
+After each completed task:
+
+Check for consistency
+
+Verify dependencies
+
+Detect conflicts
+
+Measure quality
+
+Validate against design pillars
+
+Run automated tests where applicable
+
+
+Failed tasks are regenerated or flagged for user review.
+
+
+---
+
+PHASE 7 — ITERATIVE IMPROVEMENT
+
+The AI reviews the project holistically.
+
+Questions include:
+
+Is progression balanced?
+
+Are mechanics introduced gradually?
+
+Is the difficulty curve appropriate?
+
+Is the story coherent?
+
+Are rewards meaningful?
+
+Are boss fights distinct?
+
+Are environments varied?
+
+Are accessibility settings sufficient?
+
+
+The AI proposes improvements before final packaging.
+
+
+---
+
+GENERATION MODES
+
+Guided Mode
+
+The AI asks questions and involves the user at each major decision.
+
+Assisted Mode
+
+The AI makes recommendations while allowing manual edits.
+
+Autonomous Mode
+
+The AI completes the project with minimal user intervention and presents the results for review.
+
+
+---
+
+PROJECT MEMORY
+
+The Project Memory stores:
+
+User preferences
+
+Approved designs
+
+Character relationships
+
+World rules
+
+Naming conventions
+
+Gameplay parameters
+
+Visual themes
+
+Audio themes
+
+Previous AI outputs
+
+User edits
+
+
+Regenerated content references Project Memory to maintain consistency.
+
+
+---
+
+PARAMETER SYSTEM
+
+Users can define high-level parameters such as:
+
+Genre
+
+Perspective (2D/3D)
+
+Art style
+
+Camera type
+
+Difficulty
+
+World size
+
+Number of regions
+
+Number of bosses
+
+Magic system
+
+Skill tree complexity
+
+Crafting depth
+
+Economy complexity
+
+Narrative focus
+
+Replayability
+
+Target playtime
+
+Accessibility options
+
+Target engine
+
+Target platforms
+
+
+These parameters guide every AI agent throughout development.
+
+
+---
+
+QUALITY GATES
+
+Before a project advances to the next stage, it must satisfy quality gates:
+
+Narrative coherence
+
+Gameplay balance
+
+Asset completeness
+
+UI consistency
+
+Performance targets
+
+Accessibility compliance
+
+Export readiness
+
+Error-free validation
+
+
+Any failed gate triggers regeneration or user approval.
+
+
+---
+
+EXPORT PREPARATION
+
+When generation is complete, the pipeline:
+
+Packages project files
+
+Validates assets
+
+Resolves dependencies
+
+Generates documentation
+
+Creates changelog
+
+Runs final integrity checks
+
+Produces export-ready bundles for supported engines and platforms
+
+
+
+---
+
+FUTURE EXPANSION
+
+The pipeline should be designed so new AI agents, generators, export targets, and content systems can be added without rewriting the existing architecture.
+
+
+---
+
+This completes Part 5. Part 6 will define the complete procedural game systems, including world generation, story generation, combat, AI behaviors, progression, loot, crafting, economy, factions, weather, events, replayability, and every major gameplay subsystem that GenForgeAI can generate.
