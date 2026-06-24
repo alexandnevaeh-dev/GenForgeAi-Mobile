@@ -1,0 +1,684 @@
+Official GenForgeAI Mobile v1.0 Master Replit Build Prompt
+
+Part 3 — Mobile UI/UX Architecture & User Experience Specification
+
+
+---
+
+MOBILE DESIGN PHILOSOPHY
+
+GenForgeAI Mobile should feel like a premium AI operating system for game creation—not a traditional mobile app.
+
+Design goals:
+
+Minimal learning curve
+
+Fast interactions
+
+Beautiful animations
+
+AI-first workflow
+
+Touch-friendly controls
+
+Consistent visual language
+
+Accessible for beginners
+
+Powerful enough for professionals
+
+
+Every screen should prioritize the user's current project and the AI assistant.
+
+
+---
+
+DESIGN LANGUAGE
+
+Theme
+
+Dark Mode by default
+
+Optional Light Mode
+
+Material Design 3 inspired
+
+Responsive layouts
+
+Adaptive for phones, tablets, and foldables
+
+
+Color Palette
+
+Primary: Electric Blue
+
+Secondary: Purple
+
+Accent: Cyan
+
+Success: Green
+
+Warning: Amber
+
+Error: Red
+
+Background: Near Black
+
+Surface Cards: Dark Gray
+
+
+Typography
+
+Large, readable headings
+
+Clean sans-serif font
+
+Dynamic text scaling
+
+High contrast for accessibility
+
+
+
+---
+
+APP NAVIGATION
+
+Bottom Navigation Bar
+
+1. Home
+
+
+2. AI Studio
+
+
+3. Projects
+
+
+4. Assets
+
+
+5. Profile
+
+
+
+Always visible except in immersive editing modes.
+
+
+---
+
+Side Navigation Drawer
+
+Dashboard
+
+Marketplace
+
+Community
+
+Templates
+
+Notifications
+
+Cloud Sync
+
+Export Center
+
+Analytics
+
+Help Center
+
+Settings
+
+Feedback
+
+
+
+---
+
+HOME DASHBOARD
+
+Purpose: Provide a quick overview of the user's activity.
+
+Widgets:
+
+Continue Last Project
+
+Recent Projects
+
+AI Suggestions
+
+Daily Inspiration
+
+Generation Queue
+
+Export Status
+
+Cloud Sync Status
+
+Storage Usage
+
+Trending Templates
+
+Community Highlights
+
+Update Notifications
+
+
+Quick Action Buttons:
+
+Create Game
+
+Open AI Chat
+
+Generate Assets
+
+Import Project
+
+Export Project
+
+Browse Templates
+
+
+
+---
+
+AI STUDIO SCREEN
+
+The central workspace for interacting with the Master Game Director.
+
+Features:
+
+Streaming AI responses
+
+Voice input
+
+Text input
+
+Image upload
+
+File attachment
+
+Suggested prompts
+
+Prompt history
+
+Regenerate button
+
+Undo/Redo
+
+Task progress timeline
+
+
+The AI should explain what it is doing as it works.
+
+Example:
+
+Analyzing request...
+
+Building world...
+
+Creating story...
+
+Designing combat...
+
+Generating assets...
+
+Packaging project...
+
+
+
+---
+
+PROJECTS SCREEN
+
+Displays all game projects.
+
+View options:
+
+Grid View
+
+List View
+
+Recent
+
+Favorites
+
+Archived
+
+
+Filters:
+
+Genre
+
+Engine
+
+Status
+
+Last Modified
+
+Platform
+
+Tags
+
+
+Each project card shows:
+
+Cover art
+
+Project name
+
+Genre
+
+Completion percentage
+
+Last edited
+
+AI generation status
+
+Export readiness
+
+
+
+---
+
+PROJECT DETAILS
+
+Tabs:
+
+Overview
+
+Story
+
+World
+
+Characters
+
+Combat
+
+Levels
+
+Assets
+
+Audio
+
+Tasks
+
+Build Status
+
+Notes
+
+Export
+
+
+Displays:
+
+Progress bars
+
+AI recommendations
+
+Dependency warnings
+
+Team/AI activity
+
+Version history
+
+
+
+---
+
+ASSET LIBRARY
+
+Categories:
+
+Characters
+
+Enemies
+
+Bosses
+
+Weapons
+
+Armor
+
+Tilesets
+
+Backgrounds
+
+UI
+
+Icons
+
+Animations
+
+Music
+
+Sound Effects
+
+Dialogue
+
+Scripts
+
+
+Features:
+
+Search
+
+Filters
+
+Tags
+
+Preview
+
+Favorite
+
+Replace
+
+Duplicate
+
+Export
+
+
+
+---
+
+MARKETPLACE
+
+Browse:
+
+Templates
+
+Asset Packs
+
+AI Agents
+
+Plugins
+
+Export Modules
+
+Community Projects
+
+
+Functions:
+
+Install
+
+Rate
+
+Review
+
+Update
+
+Share
+
+
+
+---
+
+COMMUNITY HUB
+
+Features:
+
+Developer Feed
+
+Showcase Projects
+
+Tutorials
+
+Challenges
+
+AI Prompt Sharing
+
+Asset Sharing
+
+Team Recruitment
+
+Discussions
+
+Live Events
+
+
+
+---
+
+EXPORT CENTER
+
+Shows:
+
+Build Queue
+
+Export Targets
+
+Packaging Status
+
+Validation Results
+
+Error Logs
+
+Download Links
+
+Build History
+
+
+Supported exports:
+
+Unity
+
+Godot
+
+Unreal Engine
+
+GameMaker
+
+HTML5
+
+Android APK
+
+Windows
+
+Linux
+
+macOS
+
+
+
+---
+
+PROFILE
+
+Displays:
+
+Avatar
+
+Username
+
+Subscription
+
+Project Count
+
+Generated Assets
+
+AI Usage
+
+Achievements
+
+Badges
+
+Followers
+
+Following
+
+
+
+---
+
+SETTINGS
+
+Categories:
+
+Account
+
+Appearance
+
+Notifications
+
+AI Preferences
+
+Cloud Sync
+
+Export Defaults
+
+Privacy
+
+Security
+
+Accessibility
+
+Storage
+
+Developer Options
+
+Experimental Features
+
+
+
+---
+
+GESTURES
+
+Supported interactions:
+
+Swipe between tabs
+
+Pull to refresh
+
+Pinch to zoom maps
+
+Drag and drop assets
+
+Long press for context menus
+
+Multi-select items
+
+Double tap to edit
+
+Swipe to archive or delete
+
+
+
+---
+
+ANIMATIONS
+
+Use smooth, subtle animations throughout:
+
+Fade transitions
+
+Card elevation
+
+Loading skeletons
+
+AI typing indicator
+
+Progress animations
+
+Success checkmarks
+
+Error shake animation
+
+Expand/collapse panels
+
+
+Target:
+
+60 FPS on supported devices
+
+
+
+---
+
+NOTIFICATIONS
+
+Types:
+
+AI task completed
+
+Export finished
+
+Cloud sync complete
+
+Collaboration updates
+
+Marketplace updates
+
+System alerts
+
+Security notices
+
+
+Users can fully customize notification preferences.
+
+
+---
+
+ACCESSIBILITY
+
+Include:
+
+Screen reader support
+
+Adjustable text sizes
+
+High contrast mode
+
+Color-blind friendly palettes
+
+Voice navigation
+
+Haptic feedback options
+
+Keyboard support for tablets
+
+Captioning for tutorials
+
+
+
+---
+
+OFFLINE EXPERIENCE
+
+When offline, users can:
+
+Browse existing projects
+
+Edit project metadata
+
+View assets
+
+Queue AI requests
+
+Prepare exports
+
+
+Queued tasks automatically resume when connectivity is restored.
+
+
+---
+
+PERFORMANCE TARGETS
+
+App launch: under 3 seconds
+
+Screen transitions: under 300 ms
+
+AI response begins: under 2 seconds (network permitting)
+
+Smooth scrolling: 60 FPS
+
+Minimal battery usage during idle
+
+Intelligent caching for frequently accessed assets and projects
+
+
+
+---
+
+This completes Part 3. Part 4 will define the complete authentication system, user accounts, cloud synchronization, backend architecture, database schema, API design, and security framework for GenForgeAI Mobile.

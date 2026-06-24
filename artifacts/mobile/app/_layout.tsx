@@ -24,21 +24,20 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   const scheme = useColorScheme();
+  const bg = scheme === "dark" ? "#0A0A0F" : "#f5f5ff";
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: {
-          backgroundColor: scheme === "dark" ? "#0A0A0F" : "#f5f5ff",
-        },
+        contentStyle: { backgroundColor: bg },
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="new-game"
-        options={{ presentation: "modal", headerShown: false }}
-      />
+      <Stack.Screen name="new-game" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="marketplace" options={{ headerShown: false }} />
+      <Stack.Screen name="community" options={{ headerShown: false }} />
+      <Stack.Screen name="export-center" options={{ headerShown: false }} />
     </Stack>
   );
 }

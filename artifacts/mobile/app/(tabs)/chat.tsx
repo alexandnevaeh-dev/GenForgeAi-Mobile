@@ -5,6 +5,7 @@ import {
   FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -24,11 +25,53 @@ const SUGGESTIONS = [
   "Horror survival with permadeath",
 ];
 
+const TASK_STEPS = [
+  { id: "analyze", label: "Analyzing request", done: true },
+  { id: "world", label: "Building world", done: true },
+  { id: "story", label: "Creating story", done: false },
+  { id: "combat", label: "Designing combat", done: false },
+  { id: "assets", label: "Generating assets", done: false },
+  { id: "package", label: "Packaging project", done: false },
+];
+
+function TaskTimeline() {
+  const colors = useColors();
+  const activeIdx = TASK_STEPS.findIndex((s) => !s.done);
+  return (
+    <View style={[styles.timeline, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.timelineTitle, { color: colors.mutedForeground }]}>AI TASK PROGRESS</Text>
+      {TASK_STEPS.map((step, i) => (
+        <View key={step.id} style={styles.timelineRow}>
+          <View style={[
+            styles.timelineDot,
+            {
+              backgroundColor: step.done ? colors.success : i === activeIdx ? colors.primary : colors.border,
+            },
+          ]} />
+          {i < TASK_STEPS.length - 1 && (
+            <View style={[styles.timelineLine, { backgroundColor: step.done ? colors.success + "44" : colors.border }]} />
+          )}
+          <Text style={[
+            styles.timelineLabel,
+            {
+              color: step.done ? colors.foreground : i === activeIdx ? colors.primary : colors.mutedForeground,
+              fontFamily: i === activeIdx ? "Inter_600SemiBold" : "Inter_400Regular",
+            },
+          ]}>
+            {step.done ? "✓ " : ""}{step.label}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { messages, isTyping, sendMessage, clearChat } = useChat();
   const [input, setInput] = useState("");
+  const [showTimeline, setShowTimeline] = useState(false);
   const flatRef = useRef<FlatList>(null);
 
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
@@ -41,36 +84,49 @@ export default function ChatScreen() {
     await sendMessage(text);
   };
 
-  const handleSuggestion = (s: string) => {
-    setInput(s);
-  };
+  const handleSuggestion = (s: string) => setInput(s);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[
         styles.header,
-        { paddingTop: Platform.OS === "web" ? 67 : insets.top + 12, backgroundColor: colors.background, borderBottomColor: colors.border }
+        {
+          paddingTop: Platform.OS === "web" ? 67 : insets.top + 12,
+          backgroundColor: colors.background,
+          borderBottomColor: colors.border,
+        },
       ]}>
         <View style={styles.headerLeft}>
           <View style={[styles.aiAvatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.aiAvatarText}>AI</Text>
+            <Feather name="cpu" size={16} color="#fff" />
           </View>
           <View>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Master Game Director</Text>
-            <Text style={[styles.headerSub, { color: colors.success }]}>Online — ready to build</Text>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>AI Studio</Text>
+            <Text style={[styles.headerSub, { color: colors.success }]}>Master Game Director · Online</Text>
           </View>
         </View>
-        <Pressable onPress={clearChat} style={styles.clearBtn}>
-          <Feather name="refresh-ccw" size={18} color={colors.mutedForeground} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => setShowTimeline((v) => !v)}
+            style={[styles.headerBtn, { backgroundColor: showTimeline ? colors.primary + "22" : colors.muted }]}
+          >
+            <Feather name="activity" size={16} color={showTimeline ? colors.primary : colors.mutedForeground} />
+          </Pressable>
+          <Pressable onPress={clearChat} style={[styles.headerBtn, { backgroundColor: colors.muted }]}>
+            <Feather name="refresh-ccw" size={16} color={colors.mutedForeground} />
+          </Pressable>
+        </View>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior="padding"
-        keyboardVerticalOffset={0}
-      >
+      {/* Task Timeline (collapsible) */}
+      {showTimeline && (
+        <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+          <TaskTimeline />
+        </View>
+      )}
+
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <FlatList
           ref={flatRef}
           data={[...messages].reverse()}
@@ -84,15 +140,18 @@ export default function ChatScreen() {
           ListHeaderComponent={
             messages.length === 1 ? (
               <View style={styles.suggestionsWrap}>
-                <Text style={[styles.suggestTitle, { color: colors.mutedForeground }]}>Try asking...</Text>
+                <Text style={[styles.suggestTitle, { color: colors.mutedForeground }]}>
+                  Start with a prompt...
+                </Text>
                 {SUGGESTIONS.map((s) => (
                   <Pressable
                     key={s}
                     onPress={() => handleSuggestion(s)}
                     style={[styles.suggestionChip, { backgroundColor: colors.card, borderColor: colors.border }]}
                   >
+                    <Feather name="zap" size={13} color={colors.primary} />
                     <Text style={[styles.suggestionText, { color: colors.foreground }]}>{s}</Text>
-                    <Feather name="arrow-up-right" size={14} color={colors.mutedForeground} />
+                    <Feather name="arrow-up-right" size={13} color={colors.mutedForeground} />
                   </Pressable>
                 ))}
               </View>
@@ -103,8 +162,29 @@ export default function ChatScreen() {
         {/* Input Bar */}
         <View style={[
           styles.inputBar,
-          { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomInset + 8 }
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingBottom: bottomInset + 8,
+          },
         ]}>
+          {/* Voice + attach row */}
+          <View style={styles.inputToolbar}>
+            <Pressable style={[styles.toolBtn, { backgroundColor: colors.muted }]}>
+              <Feather name="mic" size={16} color={colors.mutedForeground} />
+            </Pressable>
+            <Pressable style={[styles.toolBtn, { backgroundColor: colors.muted }]}>
+              <Feather name="paperclip" size={16} color={colors.mutedForeground} />
+            </Pressable>
+            <Pressable style={[styles.toolBtn, { backgroundColor: colors.muted }]}>
+              <Feather name="image" size={16} color={colors.mutedForeground} />
+            </Pressable>
+            <View style={{ flex: 1 }} />
+            <Text style={[styles.agentCount, { color: colors.mutedForeground }]}>
+              23 agents ready
+            </Text>
+          </View>
+
           <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <TextInput
               style={[styles.input, { color: colors.foreground }]}
@@ -123,7 +203,7 @@ export default function ChatScreen() {
               disabled={!input.trim() || isTyping}
               style={[
                 styles.sendBtn,
-                { backgroundColor: input.trim() && !isTyping ? colors.primary : colors.muted }
+                { backgroundColor: input.trim() && !isTyping ? colors.primary : colors.muted },
               ]}
             >
               <Feather name={isTyping ? "loader" : "send"} size={16} color="#fff" />
@@ -145,44 +225,38 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  aiAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  aiAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  headerSub: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  headerActions: { flexDirection: "row", gap: 8 },
+  headerBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  aiAvatarText: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-  },
-  headerTitle: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-  },
-  headerSub: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-  },
-  clearBtn: {
-    padding: 8,
-  },
-  suggestionsWrap: {
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 16,
-  },
-  suggestTitle: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
+  timeline: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    gap: 10,
     marginBottom: 4,
   },
+  timelineTitle: { fontSize: 10, fontFamily: "Inter_600SemiBold", letterSpacing: 0.8 },
+  timelineRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, position: "relative" },
+  timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 3, flexShrink: 0 },
+  timelineLine: {
+    position: "absolute",
+    left: 4.5,
+    top: 13,
+    width: 1,
+    height: 18,
+  },
+  timelineLabel: { fontSize: 13, flex: 1 },
+  suggestionsWrap: { paddingHorizontal: 16, gap: 8, marginBottom: 16 },
+  suggestTitle: { fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 4 },
   suggestionChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -191,17 +265,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
+    gap: 8,
   },
-  suggestionText: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-  },
-  inputBar: {
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
+  suggestionText: { fontSize: 14, fontFamily: "Inter_400Regular", flex: 1 },
+  inputBar: { borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 8, gap: 8 },
+  inputToolbar: { flexDirection: "row", alignItems: "center", gap: 8 },
+  toolBtn: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  agentCount: { fontSize: 11, fontFamily: "Inter_500Medium" },
   inputWrap: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -219,11 +289,5 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     paddingVertical: 4,
   },
-  sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  sendBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
 });
