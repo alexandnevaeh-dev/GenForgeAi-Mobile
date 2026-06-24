@@ -7,6 +7,9 @@ import React, {
   useState,
 } from "react";
 
+import { AGENT_DEFS } from "@/constants/agents";
+import { AgentState } from "@/components/AgentNetwork";
+
 export type GameGenre =
   | "RPG"
   | "Action"
@@ -53,6 +56,7 @@ export interface GameProject {
   createdAt: number;
   updatedAt: number;
   steps: GenerationStep[];
+  agentStates: AgentState[];
   tags: string[];
 }
 
@@ -68,9 +72,9 @@ interface ProjectsContextValue {
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);
 
-const STORAGE_KEY = "@genforge_projects";
+const STORAGE_KEY = "@genforge_projects_v2";
 
-const DEFAULT_STEPS: GenerationStep[] = [
+export const DEFAULT_STEPS: GenerationStep[] = [
   { id: "story", label: "Building World & Story", status: "pending" },
   { id: "design", label: "Designing Characters", status: "pending" },
   { id: "enemies", label: "Creating Enemies & Bosses", status: "pending" },
@@ -81,6 +85,19 @@ const DEFAULT_STEPS: GenerationStep[] = [
   { id: "audio", label: "Creating Soundtrack", status: "pending" },
   { id: "package", label: "Packaging Project", status: "pending" },
 ];
+
+export function makeInitialAgentStates(): AgentState[] {
+  return AGENT_DEFS.map((a) => ({ agentId: a.id, status: "idle" as const }));
+}
+
+export function makeSeededAgentStates(progress: number): AgentState[] {
+  const total = AGENT_DEFS.length;
+  const doneCount = Math.floor((progress / 100) * total);
+  return AGENT_DEFS.map((a, i) => ({
+    agentId: a.id,
+    status: i < doneCount ? "done" : "idle",
+  }));
+}
 
 const SEED_PROJECTS: GameProject[] = [
   {
@@ -101,6 +118,7 @@ const SEED_PROJECTS: GameProject[] = [
       ...s,
       status: i < 6 ? "done" : i === 6 ? "active" : "pending",
     })),
+    agentStates: makeSeededAgentStates(67),
   },
   {
     id: "proj_2",
@@ -116,6 +134,7 @@ const SEED_PROJECTS: GameProject[] = [
     updatedAt: Date.now() - 86400000,
     tags: ["cyberpunk", "runner", "neon"],
     steps: DEFAULT_STEPS.map((s) => ({ ...s, status: "done" as const })),
+    agentStates: makeSeededAgentStates(100),
   },
 ];
 
@@ -127,7 +146,16 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (raw) {
-        setProjects(JSON.parse(raw));
+        try {
+          const parsed = JSON.parse(raw) as GameProject[];
+          // Backfill agentStates for projects that don't have them
+          const migrated = parsed.map((p) =>
+            p.agentStates ? p : { ...p, agentStates: makeSeededAgentStates(p.progress) }
+          );
+          setProjects(migrated);
+        } catch {
+          setProjects(SEED_PROJECTS);
+        }
       } else {
         setProjects(SEED_PROJECTS);
       }
@@ -196,5 +224,3 @@ export function useProjects() {
   if (!ctx) throw new Error("useProjects must be used within ProjectsProvider");
   return ctx;
 }
-
-export { DEFAULT_STEPS };

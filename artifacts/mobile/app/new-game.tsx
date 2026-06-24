@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -14,15 +13,28 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AIProgressIndicator } from "@/components/AIProgressIndicator";
-import { DEFAULT_STEPS, GameProject, useProjects } from "@/context/ProjectsContext";
+import { AgentNetwork, AgentState } from "@/components/AgentNetwork";
+import { GenLogicPanel } from "@/components/GenLogicPanel";
+import { AGENT_DEFS } from "@/constants/agents";
+import {
+  DEFAULT_STEPS,
+  GameProject,
+  makeInitialAgentStates,
+  useProjects,
+} from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 
 type Genre = GameProject["genre"];
 type ArtStyle = GameProject["artStyle"];
 
-const GENRES: Genre[] = ["RPG", "Action", "Platformer", "Strategy", "Puzzle", "Horror", "Adventure", "Simulation", "Fighting", "Shooter"];
-const ART_STYLES: ArtStyle[] = ["Pixel Art", "Low Poly", "Realistic", "Cartoon", "Isometric", "Voxel", "Anime"];
+const GENRES: Genre[] = [
+  "RPG", "Action", "Platformer", "Strategy", "Puzzle",
+  "Horror", "Adventure", "Simulation", "Fighting", "Shooter",
+];
+const ART_STYLES: ArtStyle[] = [
+  "Pixel Art", "Low Poly", "Realistic", "Cartoon",
+  "Isometric", "Voxel", "Anime",
+];
 
 const EXAMPLE_PROMPTS = [
   "A dark fantasy metroidvania with procedurally generated castles and deep lore",
@@ -41,7 +53,7 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
           style={[
             styles.stepDot,
             {
-              backgroundColor: i < step ? colors.primary : i === step - 1 ? colors.primary : colors.border,
+              backgroundColor: i <= step - 1 ? colors.primary : colors.border,
               width: i === step - 1 ? 24 : 8,
             },
           ]}
@@ -49,6 +61,21 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
       ))}
     </View>
   );
+}
+
+// Builds a parallel-aware generation sequence.
+// Phase agents run in overlapping waves; within a phase multiple agents go "active" at once.
+function buildGenerationSequence(): Array<{ agentIds: string[]; delay: number }> {
+  const phases = [1, 2, 3, 4, 5, 6];
+  const sequence: Array<{ agentIds: string[]; delay: number }> = [];
+  phases.forEach((phase) => {
+    const agents = AGENT_DEFS.filter((a) => a.phase === phase);
+    // Activate all agents in this phase simultaneously
+    sequence.push({ agentIds: agents.map((a) => a.id), delay: 600 });
+    // Mark all done together
+    sequence.push({ agentIds: agents.map((a) => a.id), delay: 1600 });
+  });
+  return sequence;
 }
 
 export default function NewGameScreen() {
@@ -61,7 +88,8 @@ export default function NewGameScreen() {
   const [genre, setGenre] = useState<Genre | null>(null);
   const [artStyle, setArtStyle] = useState<ArtStyle | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [steps, setSteps] = useState(DEFAULT_STEPS.map((s) => ({ ...s })));
+  const [agentStates, setAgentStates] = useState<AgentState[]>(makeInitialAgentStates());
+  const [currentPhase, setCurrentPhase] = useState(0);
   const [createdId, setCreatedId] = useState<string | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
@@ -86,7 +114,10 @@ export default function NewGameScreen() {
     setStep(4);
 
     const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
-    const words = prompt.trim().split(" ").slice(0, 4).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const words = prompt.trim().split(" ").slice(0, 4)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+    const initialAgents = makeInitialAgentStates();
     const newProject: GameProject = {
       id,
       title: words || "Untitled Game",
@@ -99,61 +130,116 @@ export default function NewGameScreen() {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       steps: DEFAULT_STEPS.map((s) => ({ ...s })),
+      agentStates: initialAgents,
       tags: [genre!, artStyle!],
     };
     addProject(newProject);
     setCreatedId(id);
 
-    const localSteps = DEFAULT_STEPS.map((s) => ({ ...s }));
-    let currentStep = 0;
+    // Build phase-based parallel generation sequence
+    const phases = [1, 2, 3, 4, 5, 6];
+    let elapsed = 0;
+    const totalAgents = AGENT_DEFS.length;
+    let doneCount = 0;
 
-    const tick = () => {
-      if (currentStep >= localSteps.length) {
-        updateProject(id, { status: "in_progress", progress: 100 });
-        return;
-      }
-      localSteps[currentStep].status = "active";
-      setSteps([...localSteps]);
+    phases.forEach((phase, phaseIdx) => {
+      const phaseAgents = AGENT_DEFS.filter((a) => a.phase === phase);
 
+      // Activate entire phase in parallel
       setTimeout(() => {
-        localSteps[currentStep].status = "done";
-        const progress = Math.round(((currentStep + 1) / localSteps.length) * 100);
-        updateProject(id, {
-          progress,
-          steps: [...localSteps],
-          status: currentStep < localSteps.length - 1 ? "generating" : "in_progress",
+        setCurrentPhase(phase);
+        setAgentStates((prev) => {
+          const next = prev.map((s) =>
+            phaseAgents.some((a) => a.id === s.agentId)
+              ? { ...s, status: "active" as const }
+              : s
+          );
+          return next;
         });
-        currentStep++;
-        setSteps([...localSteps]);
-        if (currentStep < localSteps.length) {
-          setTimeout(tick, 900);
-        } else {
-          updateProject(id, { status: "in_progress", progress: 100 });
-        }
-      }, 1400);
-    };
+      }, elapsed + 400);
 
-    setTimeout(tick, 600);
+      elapsed += 1800;
+
+      // Mark phase complete
+      setTimeout(() => {
+        doneCount += phaseAgents.length;
+        const progress = Math.round((doneCount / totalAgents) * 100);
+        setAgentStates((prev) => {
+          const next = prev.map((s) =>
+            phaseAgents.some((a) => a.id === s.agentId)
+              ? { ...s, status: "done" as const }
+              : s
+          );
+          updateProject(id, {
+            agentStates: next,
+            progress,
+            status: phaseIdx < phases.length - 1 ? "generating" : "in_progress",
+            steps: DEFAULT_STEPS.map((s, i) => ({
+              ...s,
+              status:
+                i < Math.floor((progress / 100) * DEFAULT_STEPS.length)
+                  ? "done"
+                  : i === Math.floor((progress / 100) * DEFAULT_STEPS.length)
+                  ? "active"
+                  : "pending",
+            })),
+          });
+          return next;
+        });
+      }, elapsed);
+
+      elapsed += 400;
+    });
   };
 
   if (generating) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
+        {/* Generation header */}
         <View style={[styles.genHeader, { paddingTop: topPad }]}>
           <View style={[styles.genAvatar, { backgroundColor: colors.primary }]}>
             <Feather name="cpu" size={22} color="#fff" />
           </View>
-          <Text style={[styles.genTitle, { color: colors.foreground }]}>Generating Your Game</Text>
-          <Text style={[styles.genSub, { color: colors.mutedForeground }]} numberOfLines={2}>
-            {prompt}
-          </Text>
+          <View style={styles.genTitleBlock}>
+            <Text style={[styles.genTitle, { color: colors.foreground }]}>
+              Generating Your Game
+            </Text>
+            <Text style={[styles.genPhase, { color: colors.primary }]}>
+              {currentPhase > 0
+                ? `Phase ${currentPhase} — ${["", "Foundation", "Gameplay Systems", "Content", "Economy", "Assets", "QA & Export"][currentPhase] ?? ""}`
+                : "Initializing..."}
+            </Text>
+          </View>
         </View>
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: bottomPad + 80 }}>
-          <AIProgressIndicator steps={steps} />
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: bottomPad + 80,
+            gap: 16,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* GenLogic Panel */}
+          <GenLogicPanel
+            genre={genre!}
+            artStyle={artStyle!}
+            prompt={prompt}
+          />
+
+          {/* Full Agent Network */}
+          <AgentNetwork agentStates={agentStates} />
         </ScrollView>
 
-        <View style={[styles.genFooter, { paddingBottom: bottomPad + 8, borderTopColor: colors.border }]}>
+        {/* Footer CTA */}
+        <View
+          style={[
+            styles.genFooter,
+            { paddingBottom: bottomPad + 8, borderTopColor: colors.border, backgroundColor: colors.background },
+          ]}
+        >
           <Pressable
             onPress={() => {
               if (createdId) router.replace(`/project/${createdId}`);
@@ -189,12 +275,17 @@ export default function NewGameScreen() {
         {/* Step 1 — Prompt */}
         {step === 1 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.foreground }]}>What game do you want to create?</Text>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>
+              What game do you want to create?
+            </Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Describe your idea in one or two sentences. Be creative.
+              Describe your idea. The Master Game Director coordinates 23 specialized AI agents to build it.
             </Text>
             <TextInput
-              style={[styles.promptInput, { backgroundColor: colors.card, borderColor: colors.primary, color: colors.foreground }]}
+              style={[
+                styles.promptInput,
+                { backgroundColor: colors.card, borderColor: colors.primary, color: colors.foreground },
+              ]}
               placeholder="A dark fantasy RPG with procedurally generated dungeons..."
               placeholderTextColor={colors.mutedForeground}
               value={prompt}
@@ -212,7 +303,9 @@ export default function NewGameScreen() {
                 onPress={() => setPrompt(ex)}
                 style={[styles.exampleChip, { backgroundColor: colors.card, borderColor: colors.border }]}
               >
-                <Text style={[styles.exampleText, { color: colors.foreground }]} numberOfLines={2}>{ex}</Text>
+                <Text style={[styles.exampleText, { color: colors.foreground }]} numberOfLines={2}>
+                  {ex}
+                </Text>
                 <Feather name="arrow-up-right" size={14} color={colors.mutedForeground} />
               </Pressable>
             ))}
@@ -223,12 +316,17 @@ export default function NewGameScreen() {
         {step === 2 && (
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>Choose a genre</Text>
-            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>The AI will adapt systems, mechanics, and story to this genre.</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              GenLogic adapts all 23 AI agents to the selected genre.
+            </Text>
             <View style={styles.chipGrid}>
               {GENRES.map((g) => (
                 <Pressable
                   key={g}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setGenre(g); }}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setGenre(g);
+                  }}
                   style={[
                     styles.chip,
                     {
@@ -237,7 +335,9 @@ export default function NewGameScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: genre === g ? "#fff" : colors.foreground }]}>{g}</Text>
+                  <Text style={[styles.chipText, { color: genre === g ? "#fff" : colors.foreground }]}>
+                    {g}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -248,12 +348,17 @@ export default function NewGameScreen() {
         {step === 3 && (
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>Choose an art style</Text>
-            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>AI art agents will generate all assets in this visual style.</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              The Pixel Art Designer and Animation Designer generate all assets in this style.
+            </Text>
             <View style={styles.chipGrid}>
               {ART_STYLES.map((s) => (
                 <Pressable
                   key={s}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setArtStyle(s); }}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setArtStyle(s);
+                  }}
                   style={[
                     styles.chip,
                     {
@@ -262,7 +367,9 @@ export default function NewGameScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: artStyle === s ? "#fff" : colors.foreground }]}>{s}</Text>
+                  <Text style={[styles.chipText, { color: artStyle === s ? "#fff" : colors.foreground }]}>
+                    {s}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -278,7 +385,7 @@ export default function NewGameScreen() {
           style={[styles.nextBtn, { backgroundColor: canNext ? colors.primary : colors.muted }]}
         >
           <Text style={[styles.nextBtnText, { color: canNext ? "#fff" : colors.mutedForeground }]}>
-            {step === 3 ? "Generate Game" : "Continue"}
+            {step === 3 ? "Launch AI Agents" : "Continue"}
           </Text>
           <Feather name={step === 3 ? "zap" : "arrow-right"} size={18} color={canNext ? "#fff" : colors.mutedForeground} />
         </Pressable>
@@ -296,30 +403,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  stepRow: {
-    flexDirection: "row",
-    gap: 5,
-    alignItems: "center",
-  },
-  stepDot: {
-    height: 4,
-    borderRadius: 2,
-  },
-  stepLabel: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-  },
+  stepRow: { flexDirection: "row", gap: 5, alignItems: "center" },
+  stepDot: { height: 4, borderRadius: 2 },
+  stepLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
   stepContent: { gap: 16 },
-  stepTitle: {
-    fontSize: 24,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.3,
-  },
-  stepSub: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 22,
-  },
+  stepTitle: { fontSize: 24, fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
+  stepSub: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
   promptInput: {
     borderRadius: 14,
     borderWidth: 1.5,
@@ -330,17 +419,8 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     lineHeight: 24,
   },
-  charCount: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    textAlign: "right",
-  },
-  exampleTitle: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.8,
-    marginTop: 4,
-  },
+  charCount: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "right" },
+  exampleTitle: { fontSize: 12, fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, marginTop: 4 },
   exampleChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -349,32 +429,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
   },
-  exampleText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 20,
-  },
-  chipGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    borderTopWidth: 1,
-  },
+  exampleText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
+  chipText: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  footer: { paddingHorizontal: 24, paddingTop: 12, borderTopWidth: 1 },
   nextBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -383,34 +442,25 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 16,
   },
-  nextBtnText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-  },
+  nextBtnText: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
   genHeader: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
   },
   genAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
-  genTitle: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    textAlign: "center",
-  },
-  genSub: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 20,
-  },
+  genTitleBlock: { gap: 2 },
+  genTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  genPhase: { fontSize: 13, fontFamily: "Inter_500Medium" },
   genFooter: {
     position: "absolute",
     bottom: 0,
@@ -419,7 +469,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     borderTopWidth: 1,
-    backgroundColor: "transparent",
   },
   viewBtn: {
     flexDirection: "row",
@@ -429,9 +478,5 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 16,
   },
-  viewBtnText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: "#fff",
-  },
+  viewBtnText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#fff" },
 });
