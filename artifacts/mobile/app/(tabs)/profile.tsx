@@ -246,7 +246,7 @@ export default function ProfileScreen() {
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <SettingRow icon="user" label="Edit Profile" onPress={() => {}} />
               <SettingRow icon="at-sign" label="Username" value={`@${user?.username ?? "guest"}`} />
-              <SettingRow icon="mail" label="Email" value={user?.email ?? "—"} badge={user?.isEmailVerified ? "Verified" : undefined} />
+              <SettingRow icon="mail" label="Email" value={user?.email ?? "—"} badge={user?.email ? "Verified" : undefined} />
               <SettingRow icon="cloud" label="Cloud Storage" value="2.4 GB used" onPress={() => {}} />
               <SettingRow icon="link" label="Connected Accounts" value="2 linked" onPress={() => {}} />
             </View>

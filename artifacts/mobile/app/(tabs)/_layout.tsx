@@ -25,7 +25,7 @@ function NativeTabLayout() {
         <Label>Projects</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="assets">
-        <Icon sf={{ default: "photo.on.rectangle", selected: "photo.on.rectangle.fill" }} />
+        <Icon sf={{ default: "photo.on.rectangle", selected: "photo.fill.on.rectangle.fill" }} />
         <Label>Assets</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
