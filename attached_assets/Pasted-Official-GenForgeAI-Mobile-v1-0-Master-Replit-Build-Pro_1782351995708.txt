@@ -1,0 +1,812 @@
+Official GenForgeAI Mobile v1.0 Master Replit Build Prompt
+
+Part 6 — Procedural Game Systems & Generation Framework
+
+
+---
+
+OVERVIEW
+
+This section defines every gameplay system that GenForgeAI can generate.
+
+The goal is not to generate random content.
+
+The goal is to generate complete game ecosystems where every system interacts with every other system.
+
+The Master Game Director and GenLogic Engine ensure all generated systems remain connected and balanced.
+
+
+---
+
+WORLD GENERATION SYSTEM
+
+World Architect Responsibilities
+
+Generate:
+
+Continents
+
+Regions
+
+Biomes
+
+Dungeons
+
+Settlements
+
+Hidden Areas
+
+Boss Arenas
+
+Fast Travel Networks
+
+Secret Zones
+
+World Events
+
+
+
+---
+
+World Types
+
+Supported:
+
+Metroidvania
+
+Open World
+
+Linear
+
+Semi Open
+
+Roguelike
+
+Survival
+
+Sandbox
+
+Procedural Infinite
+
+Hybrid Worlds
+
+
+
+---
+
+Biome Generator
+
+Generate:
+
+Forests
+
+Swamps
+
+Volcanoes
+
+Mountains
+
+Deserts
+
+Frozen Regions
+
+Underground Networks
+
+Ancient Ruins
+
+Floating Islands
+
+Alien Landscapes
+
+
+Each biome contains:
+
+Weather
+
+Wildlife
+
+Resources
+
+Enemies
+
+Music Themes
+
+Lore
+
+Visual Identity
+
+
+
+---
+
+STORY GENERATION SYSTEM
+
+Story Architect
+
+Creates:
+
+Main Story
+
+Side Stories
+
+Character Arcs
+
+Lore
+
+History
+
+Mysteries
+
+Endings
+
+Alternate Endings
+
+
+
+---
+
+Narrative Structures
+
+Support:
+
+Hero's Journey
+
+Tragedy
+
+Political Intrigue
+
+Survival Narrative
+
+Exploration Narrative
+
+Mystery
+
+Nonlinear Storytelling
+
+Dynamic Storytelling
+
+Emergent Narrative
+
+
+
+---
+
+Dynamic Story Engine
+
+Tracks:
+
+Choices
+
+Relationships
+
+Reputation
+
+Faction Standing
+
+World State
+
+
+Story adapts based on player decisions.
+
+
+---
+
+FACTION SYSTEM
+
+Generate:
+
+Kingdoms
+
+Guilds
+
+Clans
+
+Corporations
+
+Religious Orders
+
+Criminal Organizations
+
+
+Each faction includes:
+
+Goals
+
+Leadership
+
+Resources
+
+Territories
+
+Relationships
+
+Reputation System
+
+
+
+---
+
+NPC SYSTEM
+
+Generate:
+
+Villagers
+
+Merchants
+
+Quest Givers
+
+Companions
+
+Rivals
+
+Leaders
+
+
+NPC Features:
+
+Personality
+
+Schedules
+
+Dialogue Trees
+
+Relationships
+
+Memories
+
+Reactions
+
+
+
+---
+
+DIALOGUE SYSTEM
+
+Supports:
+
+Branching Conversations
+
+Dynamic Responses
+
+Reputation-based Dialogue
+
+Romance Paths
+
+Companion Interactions
+
+Secret Dialogues
+
+Faction Dialogues
+
+
+
+---
+
+COMBAT SYSTEM
+
+Combat Designer
+
+Can generate:
+
+Melee Combat
+
+Ranged Combat
+
+Magic Combat
+
+Tactical Combat
+
+Action RPG Combat
+
+Soulslike Combat
+
+Turn-Based Combat
+
+Hybrid Combat
+
+
+
+---
+
+Combat Components
+
+Generate:
+
+Attacks
+
+Combos
+
+Blocking
+
+Dodging
+
+Parrying
+
+Critical Hits
+
+Status Effects
+
+Finishers
+
+Special Abilities
+
+
+
+---
+
+MAGIC SYSTEM GENERATOR
+
+Create:
+
+Schools of Magic
+
+Elements
+
+Spell Trees
+
+Ritual Systems
+
+Summoning
+
+Enchantments
+
+
+Examples:
+
+Fire
+
+Ice
+
+Arcane
+
+Nature
+
+Blood Magic
+
+Necromancy
+
+Divine Magic
+
+
+
+---
+
+SKILL TREE SYSTEM
+
+Generate:
+
+Passive Skills
+
+Active Skills
+
+Ultimate Abilities
+
+Branching Paths
+
+Prestige Trees
+
+Hybrid Trees
+
+
+Supports:
+
+Respec
+
+Unlock Requirements
+
+Synergy Detection
+
+
+
+---
+
+ENEMY GENERATOR
+
+Generate:
+
+Basic Enemies
+
+Elite Enemies
+
+Champions
+
+Mini-Bosses
+
+Bosses
+
+
+Enemy Attributes:
+
+Stats
+
+Behaviors
+
+Weaknesses
+
+Resistances
+
+Loot Tables
+
+AI Patterns
+
+
+
+---
+
+BOSS GENERATOR
+
+Bosses include:
+
+Lore
+
+Arena
+
+Unique Mechanics
+
+Multiple Phases
+
+Cinematics
+
+Music Themes
+
+
+Boss AI supports:
+
+Adaptive Behavior
+
+Attack Cycles
+
+Difficulty Scaling
+
+Environmental Interaction
+
+
+
+---
+
+LOOT SYSTEM
+
+Generate:
+
+Weapons
+
+Armor
+
+Accessories
+
+Consumables
+
+Quest Items
+
+Legendary Gear
+
+
+Rarity Levels:
+
+Common
+
+Uncommon
+
+Rare
+
+Epic
+
+Legendary
+
+Mythic
+
+
+
+---
+
+CRAFTING SYSTEM
+
+Supports:
+
+Recipes
+
+Materials
+
+Upgrades
+
+Enchantments
+
+Fusion
+
+Item Evolution
+
+
+
+---
+
+ECONOMY SYSTEM
+
+Generate:
+
+Currency
+
+Shops
+
+Trading
+
+Inflation Models
+
+Resource Flow
+
+Vendor Inventories
+
+
+
+---
+
+QUEST SYSTEM
+
+Quest Types:
+
+Main Story
+
+Side Quest
+
+Exploration
+
+Puzzle
+
+Bounty
+
+Escort
+
+Collection
+
+Faction
+
+Dynamic Events
+
+
+Rewards include:
+
+XP
+
+Currency
+
+Gear
+
+Unlocks
+
+Reputation
+
+
+
+---
+
+PUZZLE GENERATOR
+
+Create:
+
+Environmental Puzzles
+
+Logic Puzzles
+
+Physics Puzzles
+
+Rune Puzzles
+
+Combination Locks
+
+Sequence Challenges
+
+
+
+---
+
+PLATFORMING SYSTEM
+
+Generate:
+
+Wall Jump
+
+Double Jump
+
+Dash
+
+Grapple Hook
+
+Glide
+
+Climbing
+
+Swimming
+
+
+Progression abilities unlock new areas.
+
+
+---
+
+WEATHER SYSTEM
+
+Generate:
+
+Rain
+
+Storms
+
+Snow
+
+Fog
+
+Sandstorms
+
+Magical Weather
+
+
+Weather can affect:
+
+Visibility
+
+Combat
+
+NPC Behavior
+
+Resources
+
+Exploration
+
+
+
+---
+
+DAY/NIGHT SYSTEM
+
+Features:
+
+Dynamic Lighting
+
+NPC Schedules
+
+Enemy Variants
+
+Events
+
+Time-based Quests
+
+
+
+---
+
+REPUTATION SYSTEM
+
+Tracks:
+
+Faction Reputation
+
+Town Reputation
+
+Companion Trust
+
+Global Hero Status
+
+
+Impacts:
+
+Prices
+
+Dialogue
+
+Quests
+
+Endings
+
+
+
+---
+
+REPLAYABILITY ENGINE
+
+Generates:
+
+Multiple Endings
+
+New Game+
+
+Randomized Events
+
+Procedural Content
+
+Hidden Secrets
+
+Alternate Routes
+
+
+
+---
+
+DIFFICULTY SYSTEM
+
+Modes:
+
+Story
+
+Normal
+
+Veteran
+
+Hardcore
+
+Custom
+
+
+Adaptive Difficulty can monitor player performance and adjust encounters.
+
+
+---
+
+ACCESSIBILITY SYSTEMS
+
+Generate:
+
+Difficulty Sliders
+
+Visual Assistance
+
+Audio Assistance
+
+Control Remapping
+
+Colorblind Modes
+
+Subtitle Systems
+
+
+
+---
+
+META-PROGRESSION SYSTEM
+
+Optional support:
+
+Unlockables
+
+Achievements
+
+Persistent Upgrades
+
+Cosmetics
+
+Collections
+
+Seasonal Content
+
+
+
+---
+
+GENFORGEAI EXCLUSIVE FEATURE
+
+Master Game DNA System
+
+Every generated game receives a unique internal blueprint called Game DNA.
+
+Game DNA tracks:
+
+Mechanics
+
+Lore Rules
+
+Progression Rules
+
+Visual Identity
+
+Audio Identity
+
+Narrative Structure
+
+
+Every AI agent references Game DNA to maintain consistency throughout development.
+
+
+---
+
+This completes Part 6.
+
+Part 7 will define the complete Asset Generation Pipeline, including pixel art generation, sprite sheets, animations, VFX, UI assets, music generation, sound effects, voice systems, asset validation, optimization, and engine export integration.

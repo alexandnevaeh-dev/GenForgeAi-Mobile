@@ -17,6 +17,7 @@ import { AgentNetwork } from "@/components/AgentNetwork";
 import { AIProgressIndicator } from "@/components/AIProgressIndicator";
 import { BlueprintPanel } from "@/components/BlueprintPanel";
 import { GenLogicPanel } from "@/components/GenLogicPanel";
+import { ProceduralSystemsPanel } from "@/components/ProceduralSystemsPanel";
 import { QualityGates } from "@/components/QualityGates";
 import { TaskGraph } from "@/components/TaskGraph";
 import {
@@ -28,7 +29,7 @@ import {
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 
-type Tab = "overview" | "blueprint" | "tasks" | "agents" | "quality" | "memory";
+type Tab = "overview" | "blueprint" | "tasks" | "systems" | "quality" | "agents" | "memory";
 
 export default function ProjectDetailScreen() {
   const colors = useColors();
@@ -118,6 +119,7 @@ export default function ProjectDetailScreen() {
     { key: "overview", label: "Overview", icon: "home" },
     { key: "blueprint", label: "Blueprint", icon: "file-text" },
     { key: "tasks", label: "Tasks", icon: "list" },
+    { key: "systems", label: "Systems", icon: "layers" },
     { key: "quality", label: "Quality", icon: "shield" },
     { key: "agents", label: "Agents", icon: "cpu" },
     { key: "memory", label: "Memory", icon: "database" },
@@ -289,6 +291,19 @@ export default function ProjectDetailScreen() {
               </Text>
             </View>
             <TaskGraph tasks={tasks} currentPhase={currentPhase} />
+          </View>
+        )}
+
+        {/* ─── SYSTEMS ─── */}
+        {activeTab === "systems" && (
+          <View style={styles.tabContent}>
+            <View style={[styles.blueprintBanner, { backgroundColor: colors.secondary + "12", borderColor: colors.secondary }]}>
+              <Feather name="layers" size={14} color={colors.secondary} />
+              <Text style={[styles.blueprintBannerText, { color: colors.secondary }]}>
+                Procedural systems · World, Story, Combat, Enemies, Loot & Replayability
+              </Text>
+            </View>
+            <ProceduralSystemsPanel />
           </View>
         )}
 
