@@ -18,6 +18,7 @@ import { AIProgressIndicator } from "@/components/AIProgressIndicator";
 import { BlueprintPanel } from "@/components/BlueprintPanel";
 import { GenLogicPanel } from "@/components/GenLogicPanel";
 import { AssetGenerationPanel } from "@/components/AssetGenerationPanel";
+import { ExportFrameworkPanel } from "@/components/ExportFrameworkPanel";
 import { ProceduralSystemsPanel } from "@/components/ProceduralSystemsPanel";
 import { QualityGates } from "@/components/QualityGates";
 import { TaskGraph } from "@/components/TaskGraph";
@@ -30,7 +31,7 @@ import {
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 
-type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "quality" | "agents" | "memory";
+type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "export" | "quality" | "agents" | "memory";
 
 export default function ProjectDetailScreen() {
   const colors = useColors();
@@ -122,6 +123,7 @@ export default function ProjectDetailScreen() {
     { key: "tasks", label: "Tasks", icon: "list" },
     { key: "systems", label: "Systems", icon: "layers" },
     { key: "assets", label: "Assets", icon: "image" },
+    { key: "export", label: "Export", icon: "upload" },
     { key: "quality", label: "Quality", icon: "shield" },
     { key: "agents", label: "Agents", icon: "cpu" },
     { key: "memory", label: "Memory", icon: "database" },
@@ -319,6 +321,19 @@ export default function ProjectDetailScreen() {
               </Text>
             </View>
             <AssetGenerationPanel />
+          </View>
+        )}
+
+        {/* ─── EXPORT ─── */}
+        {activeTab === "export" && (
+          <View style={styles.tabContent}>
+            <View style={[styles.blueprintBanner, { backgroundColor: colors.warning + "12", borderColor: colors.warning }]}>
+              <Feather name="upload" size={14} color={colors.warning} />
+              <Text style={[styles.blueprintBannerText, { color: colors.warning }]}>
+                Engine export · Code gen, Build QA, Save systems & Project health
+              </Text>
+            </View>
+            <ExportFrameworkPanel />
           </View>
         )}
 
