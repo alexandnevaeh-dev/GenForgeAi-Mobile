@@ -17,6 +17,7 @@ import { AgentNetwork } from "@/components/AgentNetwork";
 import { AIProgressIndicator } from "@/components/AIProgressIndicator";
 import { BlueprintPanel } from "@/components/BlueprintPanel";
 import { GenLogicPanel } from "@/components/GenLogicPanel";
+import { AssetGenerationPanel } from "@/components/AssetGenerationPanel";
 import { ProceduralSystemsPanel } from "@/components/ProceduralSystemsPanel";
 import { QualityGates } from "@/components/QualityGates";
 import { TaskGraph } from "@/components/TaskGraph";
@@ -29,7 +30,7 @@ import {
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 
-type Tab = "overview" | "blueprint" | "tasks" | "systems" | "quality" | "agents" | "memory";
+type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "quality" | "agents" | "memory";
 
 export default function ProjectDetailScreen() {
   const colors = useColors();
