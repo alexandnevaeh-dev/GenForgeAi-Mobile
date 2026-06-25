@@ -14,6 +14,7 @@ const createProjectSchema = z.object({
   artStyle: z.string().max(64).default("Pixel Art"),
   platform: z.string().max(64).default("Multi-platform"),
   tags: z.array(z.string()).max(10).default([]),
+  prompt: z.string().max(1000).optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial().extend({
@@ -45,9 +46,10 @@ router.post("/projects", requireAuth, async (req, res) => {
     return;
   }
 
+  const { prompt, ...rest } = result.data;
   const [project] = await db
     .insert(projects)
-    .values({ ...result.data, ownerId: req.user!.sub })
+    .values({ ...rest, ownerId: req.user!.sub, storyData: prompt ? { prompt } : {} })
     .returning();
 
   res.status(201).json({ project });

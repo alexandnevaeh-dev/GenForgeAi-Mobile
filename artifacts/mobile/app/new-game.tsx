@@ -36,8 +36,10 @@ import {
   DEFAULT_STEPS,
   type GameProject,
   makeInitialAgentStates,
+  makeSeededAgentStates,
   useProjects,
 } from "@/context/ProjectsContext";
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
 type Genre = GameProject["genre"];
@@ -132,6 +134,8 @@ export default function NewGameScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { addProject, updateProject } = useProjects();
+  const { accessToken, user } = useAuth();
+  const isGuest = !accessToken || user?.id === "guest";
 
   // Wizard state
   const [step, setStep] = useState(1);
@@ -234,16 +238,69 @@ export default function NewGameScreen() {
     return () => { if (analysisIntervalRef.current) clearInterval(analysisIntervalRef.current); };
   }, [step]);
 
-  const startGeneration = () => {
+  const runGuestSimulation = (id: string, allTasks: PipelineTask[], params: GameParams) => {
+    const phases = [1, 2, 3, 4, 5, 6];
+    let elapsed = 0;
+    const totalAgents = AGENT_DEFS.length;
+    let doneCount = 0;
+
+    phases.forEach((phase, phaseIdx) => {
+      const phaseAgents = AGENT_DEFS.filter((a) => a.phase === phase);
+
+      setTimeout(() => {
+        setCurrentPhase(phase);
+        setAgentStates((prev) =>
+          prev.map((s) => phaseAgents.some((a) => a.id === s.agentId) ? { ...s, status: "active" } : s)
+        );
+        setTasks((prev) =>
+          prev.map((t) => t.phase === phase ? { ...t, status: "running", progress: 0 } : t)
+        );
+      }, elapsed + 400);
+
+      setTimeout(() => {
+        setTasks((prev) =>
+          prev.map((t) => t.phase === phase ? { ...t, progress: 60 } : t)
+        );
+      }, elapsed + 1000);
+
+      elapsed += 1800;
+
+      setTimeout(() => {
+        doneCount += phaseAgents.length;
+        const progress = Math.round((doneCount / totalAgents) * 100);
+        setAgentStates((prev) =>
+          prev.map((s) => phaseAgents.some((a) => a.id === s.agentId) ? { ...s, status: "done" } : s)
+        );
+        setTasks((prev) =>
+          prev.map((t) => t.phase === phase ? { ...t, status: "completed", progress: 100, output: "✓ Complete" } : t)
+        );
+        updateProject(id, {
+          progress,
+          status: phaseIdx < phases.length - 1 ? "generating" : "in_progress",
+          steps: DEFAULT_STEPS.map((s, i) => ({
+            ...s,
+            status:
+              i < Math.floor((progress / 100) * DEFAULT_STEPS.length) ? "done"
+              : i === Math.floor((progress / 100) * DEFAULT_STEPS.length) ? "active"
+              : "pending",
+          })),
+        });
+        if (phaseIdx === phases.length - 1) setGenerationComplete(true);
+      }, elapsed);
+
+      elapsed += 400;
+    });
+  };
+
+  const startGeneration = async () => {
     setGenerating(true);
     const params = buildParams();
-    const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
     const words = prompt.trim().split(" ").slice(0, 4)
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
     const initialAgents = makeInitialAgentStates();
     const newProject: GameProject = {
-      id,
+      id: `local-${Date.now()}`,
       title: words || "Untitled Game",
       description: prompt,
       genre: genre!,
@@ -257,73 +314,157 @@ export default function NewGameScreen() {
       agentStates: initialAgents,
       tags: [genre!, artStyle!, ...platforms.slice(0, 2)],
     };
-    addProject(newProject);
-    setCreatedId(id);
+
+    let created: GameProject;
+    try {
+      created = await addProject(newProject);
+    } catch {
+      setGenerating(false);
+      return;
+    }
+
+    setCreatedId(created.id);
     setAgentStates(initialAgents);
 
-    // Drive task graph forward
     const allTasks = tasks.length > 0 ? [...tasks] : generateTaskGraph(blueprint!, params);
-    const phases = [1, 2, 3, 4, 5, 6];
-    let elapsed = 0;
-    const totalAgents = AGENT_DEFS.length;
-    let doneCount = 0;
 
-    phases.forEach((phase, phaseIdx) => {
-      const phaseAgents = AGENT_DEFS.filter((a) => a.phase === phase);
-      const phaseTasks = allTasks.filter((t) => t.phase === phase);
+    // Guest users: use local simulation
+    if (isGuest) {
+      runGuestSimulation(created.id, allTasks, params);
+      return;
+    }
 
-      // Activate phase agents
-      setTimeout(() => {
-        setCurrentPhase(phase);
-        setAgentStates((prev) =>
-          prev.map((s) => phaseAgents.some((a) => a.id === s.agentId) ? { ...s, status: "active" } : s)
-        );
-        // Mark tasks as running
-        setTasks((prev) =>
-          prev.map((t) => t.phase === phase ? { ...t, status: "running", progress: 0 } : t)
-        );
-      }, elapsed + 400);
+    // Authenticated users: real AI generation via SSE
+    try {
+      const response = await fetch(`/api/projects/${created.id}/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          prompt,
+          genre: genre ?? "RPG",
+          artStyle: artStyle ?? "Pixel Art",
+          difficulty,
+          gameLength,
+          worldSize,
+          numBosses,
+          mode,
+        }),
+      });
 
-      // Mid-way task progress
-      setTimeout(() => {
-        setTasks((prev) =>
-          prev.map((t) => t.phase === phase ? { ...t, progress: 60 } : t)
-        );
-      }, elapsed + 1000);
+      if (!response.ok || !response.body) {
+        // Fallback to simulation on connection error
+        runGuestSimulation(created.id, allTasks, params);
+        return;
+      }
 
-      elapsed += 1800;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      const totalAgents = AGENT_DEFS.length;
+      let doneCount = 0;
 
-      // Complete phase
-      setTimeout(() => {
-        doneCount += phaseAgents.length;
-        const progress = Math.round((doneCount / totalAgents) * 100);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        setAgentStates((prev) =>
-          prev.map((s) => phaseAgents.some((a) => a.id === s.agentId) ? { ...s, status: "done" } : s)
-        );
-        setTasks((prev) =>
-          prev.map((t) => t.phase === phase ? { ...t, status: "completed", progress: 100, output: "✓ Complete" } : t)
-        );
-        updateProject(id, {
-          agentStates: makeInitialAgentStates(),
-          progress,
-          status: phaseIdx < phases.length - 1 ? "generating" : "in_progress",
-          steps: DEFAULT_STEPS.map((s, i) => ({
-            ...s,
-            status:
-              i < Math.floor((progress / 100) * DEFAULT_STEPS.length) ? "done"
-              : i === Math.floor((progress / 100) * DEFAULT_STEPS.length) ? "active"
-              : "pending",
-          })),
-        });
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n").filter((l) => l.startsWith("data:"));
 
-        if (phaseIdx === phases.length - 1) {
-          setGenerationComplete(true);
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(5).trim()) as {
+              event?: string;
+              phase?: number;
+              label?: string;
+              progress?: number;
+              message?: string;
+            };
+
+            if (data.event === "phase_start" && data.phase !== undefined) {
+              const phase = data.phase;
+              const phaseAgents = AGENT_DEFS.filter((a) => a.phase === phase);
+              setCurrentPhase(phase);
+              setAgentStates((prev) =>
+                prev.map((s) =>
+                  phaseAgents.some((a) => a.id === s.agentId)
+                    ? { ...s, status: "active" }
+                    : s
+                )
+              );
+              setTasks((prev) =>
+                prev.map((t) =>
+                  t.phase === phase ? { ...t, status: "running", progress: 0 } : t
+                )
+              );
+            }
+
+            if (data.event === "phase_complete" && data.phase !== undefined) {
+              const phase = data.phase;
+              const phaseAgents = AGENT_DEFS.filter((a) => a.phase === phase);
+              const progress = data.progress ?? Math.round((phase / 6) * 100);
+              doneCount += phaseAgents.length;
+
+              setAgentStates((prev) =>
+                prev.map((s) =>
+                  phaseAgents.some((a) => a.id === s.agentId)
+                    ? { ...s, status: "done" }
+                    : s
+                )
+              );
+              setTasks((prev) =>
+                prev.map((t) =>
+                  t.phase === phase
+                    ? { ...t, status: "completed", progress: 100, output: "✓ Complete" }
+                    : t
+                )
+              );
+
+              // Mid-phase task progress animation
+              setTimeout(() => {
+                setTasks((prev) =>
+                  prev.map((t) =>
+                    t.phase === phase && t.status === "running"
+                      ? { ...t, progress: 60 }
+                      : t
+                  )
+                );
+              }, 300);
+
+              updateProject(created.id, {
+                progress,
+                status: phase < 6 ? "generating" : "in_progress",
+                agentStates: makeSeededAgentStates(progress),
+                steps: DEFAULT_STEPS.map((s, i) => ({
+                  ...s,
+                  status:
+                    i < Math.floor((progress / 100) * DEFAULT_STEPS.length) ? "done"
+                    : i === Math.floor((progress / 100) * DEFAULT_STEPS.length) ? "active"
+                    : "pending",
+                })),
+              });
+            }
+
+            if (data.event === "done") {
+              setGenerationComplete(true);
+              updateProject(created.id, { status: "in_progress", progress: 100 });
+            }
+
+            if (data.event === "error") {
+              // Fall back to simulation on AI error
+              runGuestSimulation(created.id, allTasks, params);
+              break;
+            }
+          } catch {
+            // skip malformed SSE lines
+          }
         }
-      }, elapsed);
-
-      elapsed += 400;
-    });
+      }
+    } catch {
+      // Network error — fall back to simulation
+      runGuestSimulation(created.id, allTasks, params);
+    }
   };
 
   // ─── Generation View ──────────────────────────────────────────────────
