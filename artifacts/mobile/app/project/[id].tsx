@@ -121,6 +121,7 @@ export default function ProjectDetailScreen() {
     { key: "blueprint", label: "Blueprint", icon: "file-text" },
     { key: "tasks", label: "Tasks", icon: "list" },
     { key: "systems", label: "Systems", icon: "layers" },
+    { key: "assets", label: "Assets", icon: "image" },
     { key: "quality", label: "Quality", icon: "shield" },
     { key: "agents", label: "Agents", icon: "cpu" },
     { key: "memory", label: "Memory", icon: "database" },
@@ -305,6 +306,19 @@ export default function ProjectDetailScreen() {
               </Text>
             </View>
             <ProceduralSystemsPanel />
+          </View>
+        )}
+
+        {/* ─── ASSETS ─── */}
+        {activeTab === "assets" && (
+          <View style={styles.tabContent}>
+            <View style={[styles.blueprintBanner, { backgroundColor: colors.accent + "12", borderColor: colors.accent }]}>
+              <Feather name="image" size={14} color={colors.accent} />
+              <Text style={[styles.blueprintBannerText, { color: colors.accent }]}>
+                Asset pipeline · Art, Audio, Database & Living Asset System
+              </Text>
+            </View>
+            <AssetGenerationPanel />
           </View>
         )}
 
