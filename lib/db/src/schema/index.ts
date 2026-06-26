@@ -153,6 +153,26 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const jobs = pgTable("jobs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  type: text("type").notNull().default("generate"),
+  status: text("status").notNull().default("pending"),
+  phase: integer("phase").notNull().default(0),
+  progress: integer("progress").notNull().default(0),
+  label: text("label").notNull().default(""),
+  inputData: json("input_data").$type<Record<string, unknown>>().default({}),
+  result: json("result").$type<Record<string, unknown>>(),
+  error: text("error"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Project = typeof projects.$inferSelect;
@@ -162,3 +182,5 @@ export type NewAiTask = typeof aiTasks.$inferInsert;
 export type Asset = typeof assets.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type Job = typeof jobs.$inferSelect;
+export type NewJob = typeof jobs.$inferInsert;

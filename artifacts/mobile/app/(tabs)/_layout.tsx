@@ -28,6 +28,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "photo.on.rectangle", selected: "photo.fill.on.rectangle.fill" }} />
         <Label>Assets</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="jobs">
+        <Icon sf={{ default: "gearshape.2", selected: "gearshape.2.fill" }} />
+        <Label>Jobs</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
         <Label>Profile</Label>
@@ -114,6 +118,18 @@ function ClassicTabLayout() {
               <SymbolView name="photo.on.rectangle" tintColor={color} size={24} />
             ) : (
               <Feather name="image" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="jobs"
+        options={{
+          title: "Jobs",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="gearshape.2" tintColor={color} size={24} />
+            ) : (
+              <Feather name="cpu" size={22} color={color} />
             ),
         }}
       />

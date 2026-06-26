@@ -1,1 +1,3 @@
 - [AI Router Architecture](ai-router-architecture.md) — task-aware model routing via OpenRouter free tier; workspace lib exports must point to ./src/index.ts not ./dist/ for esbuild compatibility.
+- [Background job system](background-jobs.md) — in-process queue (no Redis), DB-persisted via `jobs` table, 2 concurrent; generate handler registered in app.ts via registerHandler("generate", …).
+- [Generation pipeline split](generation-pipeline.md) — SSE and async endpoints both call lib/generator.ts; never duplicate pipeline logic between routes.

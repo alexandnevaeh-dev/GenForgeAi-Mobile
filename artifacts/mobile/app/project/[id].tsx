@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
+import { JobStatusCard, type BackgroundJob } from "@/components/JobStatusCard";
 
 interface GeneratedAsset {
   id: string;
@@ -56,6 +57,54 @@ export default function ProjectDetailScreen() {
 
   const [projectAssets, setProjectAssets] = useState<GeneratedAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(false);
+  const [activeJob, setActiveJob] = useState<BackgroundJob | null>(null);
+  const [startingJob, setStartingJob] = useState(false);
+
+  const project = projects.find((p) => p.id === id);
+
+  const startBackgroundGeneration = useCallback(async () => {
+    if (!accessToken || !id || startingJob) return;
+    setStartingJob(true);
+    try {
+      const res = await fetch(`/api/projects/${id}/generate-async`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          prompt: project?.prompt ?? "",
+          genre: project?.genre ?? "RPG",
+          artStyle: project?.artStyle ?? "Pixel Art",
+          difficulty: "normal",
+          gameLength: "medium",
+          worldSize: "medium",
+          numBosses: 3,
+        }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        Alert.alert("Error", err.error ?? "Failed to start generation");
+        return;
+      }
+      const data = (await res.json()) as { jobId: string; status: string };
+      setActiveJob({
+        id: data.jobId,
+        type: "generate",
+        status: "pending",
+        phase: 0,
+        progress: 0,
+        label: "Queued…",
+        projectId: id,
+        createdAt: new Date().toISOString(),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert("Error", "Could not reach the server");
+    } finally {
+      setStartingJob(false);
+    }
+  }, [accessToken, id, startingJob, project]);
 
   const fetchProjectAssets = useCallback(async () => {
     if (isGuest || !id || !accessToken) return;
@@ -79,7 +128,6 @@ export default function ProjectDetailScreen() {
     if (activeTab === "assets") fetchProjectAssets();
   }, [activeTab, fetchProjectAssets]);
 
-  const project = projects.find((p) => p.id === id);
   const topPad = Platform.OS === "web" ? 67 : insets.top + 12;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 16;
 
@@ -281,13 +329,29 @@ export default function ProjectDetailScreen() {
             <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>GENERATION PIPELINE</Text>
             <AIProgressIndicator steps={project.steps} />
 
+            {/* Active background job */}
+            {activeJob && (
+              <JobStatusCard
+                job={activeJob}
+                onJobUpdate={(updated) => setActiveJob(updated)}
+                onCancel={(jobId) => {
+                  fetch(`/api/jobs/${jobId}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                  }).catch(() => {});
+                  setActiveJob((j) => j ? { ...j, status: "cancelled" } : null);
+                }}
+                poll
+              />
+            )}
+
             {/* Quick actions */}
             <View style={styles.actionsGrid}>
               {[
                 { icon: "message-square", label: "Continue in Chat", primary: true },
                 { icon: "file-text", label: "View Blueprint", primary: false, onPress: () => setActiveTab("blueprint") },
                 { icon: "list", label: "Task Graph", primary: false, onPress: () => setActiveTab("tasks") },
-                { icon: "download", label: "Export", primary: false },
+                { icon: "download", label: "Export", primary: false, onPress: () => setActiveTab("export") },
               ].map((action) => (
                 <Pressable
                   key={action.label}
@@ -308,6 +372,37 @@ export default function ProjectDetailScreen() {
                 </Pressable>
               ))}
             </View>
+
+            {/* Background generate button */}
+            {!isGuest && !activeJob && (
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  void startBackgroundGeneration();
+                }}
+                disabled={startingJob}
+                style={[
+                  styles.asyncGenBtn,
+                  { backgroundColor: "#7B2FFF22", borderColor: "#7B2FFF" },
+                  startingJob && { opacity: 0.6 },
+                ]}
+              >
+                {startingJob ? (
+                  <ActivityIndicator size="small" color="#7B2FFF" />
+                ) : (
+                  <Feather name="cpu" size={18} color="#7B2FFF" />
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.asyncGenLabel, { color: "#7B2FFF" }]}>
+                    {startingJob ? "Starting…" : "Generate in Background"}
+                  </Text>
+                  <Text style={[styles.asyncGenSub, { color: "#7B2FFF99" }]}>
+                    Run the full pipeline without staying on this screen
+                  </Text>
+                </View>
+                <Feather name="arrow-right" size={16} color="#7B2FFF" />
+              </Pressable>
+            )}
           </View>
         )}
 
@@ -659,4 +754,14 @@ const styles = StyleSheet.create({
   assetsEmpty: { alignItems: "center", gap: 8, paddingVertical: 20 },
   assetsEmptyText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
   imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  asyncGenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  asyncGenLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  asyncGenSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
 });
