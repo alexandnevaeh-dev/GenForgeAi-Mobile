@@ -14,6 +14,7 @@ import {
   genEnvironmentArt,
   type GameImageCtx,
 } from "./imageGen";
+import { getProjectMemory, writeMemories, buildMemoryContext } from "./agentMemory";
 
 export interface GenerateParams {
   prompt: string;
@@ -83,11 +84,16 @@ Number of Bosses: ${p.numBosses}`;
     .set({ status: "generating", updatedAt: new Date() })
     .where(eq(projects.id, projectId));
 
+  // Load existing memories to inject as context for continuity
+  const existingMemories = await getProjectMemory(projectId);
+  const memCtx = buildMemoryContext(existingMemories);
+  onEvent({ event: "memory_loaded", count: existingMemories.length });
+
   // ── Phase 1: Foundation ────────────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 1, label: "Foundation" });
   const foundationResult = await routeTask("foundation", [
     { role: "system", content: "You are a game design expert. Always respond with valid JSON only, no extra text." },
-    { role: "user", content: `Generate a game design foundation for this game as valid JSON:\n${ctx}\n\nSchema: {"tagline": string, "coreLoop": string, "uniqueMechanic": string, "targetAudience": string, "genreFeatures": string[], "tone": string, "setting": string}` },
+    { role: "user", content: `Generate a game design foundation for this game as valid JSON:\n${ctx}${memCtx}\n\nSchema: {"tagline": string, "coreLoop": string, "uniqueMechanic": string, "targetAudience": string, "genreFeatures": string[], "tone": string, "setting": string}` },
   ]);
   onEvent({ event: "phase_model", phase: 1, model: foundationResult.model });
   const storyData: Record<string, unknown> = {
@@ -98,13 +104,21 @@ Number of Bosses: ${p.numBosses}`;
     .update(projects)
     .set({ storyData, progress: 16, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  // Write key foundation decisions to memory
+  void writeMemories(projectId, ownerId, 1, "Foundation Agent", {
+    ...(typeof storyData.tone === "string" ? { Tone: storyData.tone } : {}),
+    ...(typeof storyData.setting === "string" ? { Setting: storyData.setting } : {}),
+    ...(typeof storyData.coreLoop === "string" ? { "Core Loop": storyData.coreLoop } : {}),
+    ...(typeof storyData.uniqueMechanic === "string" ? { "Unique Mechanic": storyData.uniqueMechanic } : {}),
+    ...(typeof storyData.tagline === "string" ? { Tagline: storyData.tagline } : {}),
+  });
   onEvent({ event: "phase_complete", phase: 1, progress: 16 });
 
   // ── Phase 2: World & Story ─────────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 2, label: "World & Story" });
   const worldResult = await routeTask("story", [
     { role: "system", content: "You are a world-building expert. Always respond with valid JSON only, no extra text." },
-    { role: "user", content: `Generate world and story content for this game as valid JSON:\n${ctx}\nFoundation: ${JSON.stringify(storyData).slice(0, 400)}\n\nSchema: {"worldName": string, "loreSummary": string, "acts": [{"title": string, "summary": string}], "factions": [{"name": string, "description": string}], "theme": string, "openingHook": string}` },
+    { role: "user", content: `Generate world and story content for this game as valid JSON:\n${ctx}\nFoundation: ${JSON.stringify(storyData).slice(0, 400)}${memCtx}\n\nSchema: {"worldName": string, "loreSummary": string, "acts": [{"title": string, "summary": string}], "factions": [{"name": string, "description": string}], "theme": string, "openingHook": string}` },
   ]);
   onEvent({ event: "phase_model", phase: 2, model: worldResult.model });
   const worldData = parseJSON(worldResult.content);
@@ -112,6 +126,13 @@ Number of Bosses: ${p.numBosses}`;
     .update(projects)
     .set({ worldData, progress: 33, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  // Write world decisions to memory
+  void writeMemories(projectId, ownerId, 2, "World Architect", {
+    ...(typeof worldData.worldName === "string" ? { "World Name": worldData.worldName } : {}),
+    ...(typeof worldData.theme === "string" ? { Theme: worldData.theme } : {}),
+    ...(typeof worldData.loreSummary === "string" ? { "Lore Summary": worldData.loreSummary.slice(0, 200) } : {}),
+    ...(typeof worldData.openingHook === "string" ? { "Opening Hook": worldData.openingHook.slice(0, 200) } : {}),
+  });
   onEvent({ event: "phase_complete", phase: 2, progress: 33 });
 
   // ── Phase 3: Characters & Content ─────────────────────────────────────────
@@ -126,6 +147,16 @@ Number of Bosses: ${p.numBosses}`;
     .update(projects)
     .set({ characterData, progress: 50, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  // Write character decisions to memory
+  const protagonist = characterData.protagonist as Record<string, unknown> | undefined;
+  const bosses = characterData.bosses as Record<string, unknown>[] | undefined;
+  void writeMemories(projectId, ownerId, 3, "Character Designer", {
+    ...(typeof protagonist?.name === "string" ? { "Protagonist Name": protagonist.name } : {}),
+    ...(typeof protagonist?.backstory === "string" ? { "Protagonist Backstory": protagonist.backstory.slice(0, 150) } : {}),
+    ...(bosses?.[0] && typeof bosses[0].name === "string" ? { "Main Boss": bosses[0].name } : {}),
+    ...(Array.isArray(characterData.quests) ? { "Quest Count": String(characterData.quests.length) } : {}),
+    ...(Array.isArray(characterData.enemies) ? { "Enemy Types": String(characterData.enemies.length) } : {}),
+  });
   onEvent({ event: "phase_complete", phase: 3, progress: 50 });
 
   // ── Phase 4: Image Generation ──────────────────────────────────────────────
@@ -202,13 +233,21 @@ Number of Bosses: ${p.numBosses}`;
   const updatePayload: Record<string, unknown> = { assetManifest: [assetData], progress: 66, updatedAt: new Date() };
   if (coverArtUrl) updatePayload.coverArt = coverArtUrl;
   await db.update(projects).set(updatePayload).where(eq(projects.id, projectId));
+  // Write image generation decisions to memory
+  void writeMemories(projectId, ownerId, 4, "Image Generator", {
+    ...(imgCtx.protagonistName ? { "Protagonist Visual": `${imgCtx.protagonistName} — ${p.artStyle} character art` } : {}),
+    ...(imgCtx.bossName ? { "Boss Visual": `${imgCtx.bossName} — ${p.artStyle} boss art` } : {}),
+    ...(imgCtx.worldName ? { "World Visual": `${imgCtx.worldName} — ${p.artStyle} environment art` } : {}),
+    "Images Generated": String(insertedAssets.length),
+    "Art Style Used": p.artStyle,
+  });
   onEvent({ event: "phase_complete", phase: 4, progress: 66, imagesGenerated: insertedAssets.length });
 
   // ── Phase 5: Combat & Balance ──────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 5, label: "QA & Balance" });
   const combatResult = await routeTask("balance", [
     { role: "system", content: "You are a game balance expert. Always respond with valid JSON only, no extra text." },
-    { role: "user", content: `Generate combat and balance parameters for this game as valid JSON:\n${ctx}\n\nSchema: {"combatSystem": string, "coreMechanics": string[], "playerStats": {"healthRange": string, "damageRange": string, "levelCap": number}, "enemyScaling": string, "difficultyModifiers": {"easy": string, "normal": string, "hard": string}, "economy": {"currency": string, "progressionLoop": string}, "balanceNotes": string}` },
+    { role: "user", content: `Generate combat and balance parameters for this game as valid JSON:\n${ctx}${memCtx}\n\nSchema: {"combatSystem": string, "coreMechanics": string[], "playerStats": {"healthRange": string, "damageRange": string, "levelCap": number}, "enemyScaling": string, "difficultyModifiers": {"easy": string, "normal": string, "hard": string}, "economy": {"currency": string, "progressionLoop": string}, "balanceNotes": string}` },
   ]);
   onEvent({ event: "phase_model", phase: 5, model: combatResult.model });
   const combatData = parseJSON(combatResult.content);
@@ -216,6 +255,17 @@ Number of Bosses: ${p.numBosses}`;
     .update(projects)
     .set({ combatData, progress: 83, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  // Write balance decisions to memory
+  void writeMemories(projectId, ownerId, 5, "Balance Agent", {
+    ...(typeof combatData.combatSystem === "string" ? { "Combat System": combatData.combatSystem } : {}),
+    ...(typeof combatData.enemyScaling === "string" ? { "Enemy Scaling": combatData.enemyScaling } : {}),
+    ...((combatData.economy as Record<string, unknown>)?.currency
+      ? { Currency: String((combatData.economy as Record<string, unknown>).currency) }
+      : {}),
+    ...(typeof combatData.balanceNotes === "string"
+      ? { "Balance Notes": combatData.balanceNotes.slice(0, 200) }
+      : {}),
+  });
   onEvent({ event: "phase_complete", phase: 5, progress: 83 });
 
   // ── Phase 6: Packaging ─────────────────────────────────────────────────────

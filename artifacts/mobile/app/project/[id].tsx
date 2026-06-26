@@ -35,6 +35,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 import { JobStatusCard, type BackgroundJob } from "@/components/JobStatusCard";
+import { ProjectMemoryPanel } from "@/components/ProjectMemoryPanel";
 
 interface GeneratedAsset {
   id: string;
@@ -533,46 +534,13 @@ export default function ProjectDetailScreen() {
         {/* ─── MEMORY ─── */}
         {activeTab === "memory" && (
           <View style={styles.tabContent}>
-            <GenLogicPanel genre={project.genre} artStyle={project.artStyle} prompt={project.prompt} />
-
-            {/* Project Memory */}
-            <View style={[styles.memoryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>PROJECT MEMORY</Text>
-              {[
-                { key: "Naming Convention", value: "Fantasy-Latin compound words for places, Anglo-Saxon for characters" },
-                { key: "Visual Theme", value: `${project.artStyle} with dark palette and glowing particle accents` },
-                { key: "Audio Theme", value: "Dynamic orchestral — calm exploration, intense combat layers" },
-                { key: "World Rules", value: "Magic has energy cost, regions unlock sequentially, no fast travel in dungeons" },
-                { key: "Approved Designs", value: "Protagonist: knight silhouette, 4 boss concepts confirmed" },
-              ].map((item) => (
-                <View key={item.key} style={[styles.memoryRow, { borderTopColor: colors.border }]}>
-                  <Text style={[styles.memoryKey, { color: colors.primary }]}>{item.key}</Text>
-                  <Text style={[styles.memoryVal, { color: colors.foreground }]}>{item.value}</Text>
-                </View>
-              ))}
+            <View style={[styles.blueprintBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary }]}>
+              <Feather name="database" size={14} color={colors.primary} />
+              <Text style={[styles.blueprintBannerText, { color: colors.primary }]}>
+                Agent memory · Decisions persist across generation runs
+              </Text>
             </View>
-
-            {/* Agent communication log */}
-            <View style={[styles.memoryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>AGENT COMMUNICATION LOG</Text>
-              {[
-                { agent: "World Architect", msg: "Overworld map generated. 6 biomes defined with distinct rules.", time: "3h ago" },
-                { agent: "Story Architect", msg: "Main narrative arc finalized. 3 alternate endings written.", time: "3h ago" },
-                { agent: "Enemy Designer", msg: "47 enemy variants with full behavior trees and loot tables.", time: "2h ago" },
-                { agent: "Balance Agent", msg: "Combat simulation passed. Difficulty curve within tolerance.", time: "1h ago" },
-                { agent: "QA Validator", msg: "7/8 quality gates passed. Export readiness: 74% (minor asset gap).", time: "45m ago" },
-                { agent: "Master Game Director", msg: "Phase 5 complete. Initiating asset finalization and export prep.", time: "30m ago" },
-              ].map((log, i) => (
-                <View key={i} style={[styles.logRow, { borderTopColor: colors.border }]}>
-                  <View style={[styles.logDot, { backgroundColor: colors.primary }]} />
-                  <View style={styles.logBody}>
-                    <Text style={[styles.logAgent, { color: colors.primary }]}>{log.agent}</Text>
-                    <Text style={[styles.logMsg, { color: colors.foreground }]}>{log.msg}</Text>
-                    <Text style={[styles.logTime, { color: colors.mutedForeground }]}>{log.time}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
+            <ProjectMemoryPanel projectId={project.id} />
           </View>
         )}
       </ScrollView>

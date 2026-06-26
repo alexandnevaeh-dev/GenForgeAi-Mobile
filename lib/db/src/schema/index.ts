@@ -153,6 +153,22 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const agentMemories = pgTable("agent_memories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  agent: text("agent").notNull(),
+  key: text("key").notNull(),
+  value: text("value").notNull(),
+  phase: integer("phase").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
   ownerId: uuid("owner_id")
@@ -184,3 +200,5 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+export type AgentMemory = typeof agentMemories.$inferSelect;
+export type NewAgentMemory = typeof agentMemories.$inferInsert;
