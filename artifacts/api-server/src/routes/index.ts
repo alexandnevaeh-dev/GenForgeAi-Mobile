@@ -3,6 +3,7 @@ import aiTasksRouter from "./ai-tasks";
 import assetsRouter from "./assets";
 import authRouter from "./auth";
 import chatRouter from "./chat";
+import exportRouter from "./export";
 import generateRouter from "./generate";
 import healthRouter from "./health";
 import projectsRouter from "./projects";
@@ -18,5 +19,6 @@ router.use(aiTasksRouter);
 router.use(assetsRouter);
 router.use(chatRouter);
 router.use(generateRouter);
+router.use(exportRouter);
 
 export default router;

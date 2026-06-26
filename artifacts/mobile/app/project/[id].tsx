@@ -20,6 +20,7 @@ import { AIProgressIndicator } from "@/components/AIProgressIndicator";
 import { BlueprintPanel } from "@/components/BlueprintPanel";
 import { GenLogicPanel } from "@/components/GenLogicPanel";
 import { AssetGenerationPanel } from "@/components/AssetGenerationPanel";
+import { DownloadExportPanel } from "@/components/DownloadExportPanel";
 import { ExportFrameworkPanel } from "@/components/ExportFrameworkPanel";
 import { ProceduralSystemsPanel } from "@/components/ProceduralSystemsPanel";
 import { QualityGates } from "@/components/QualityGates";
@@ -402,9 +403,14 @@ export default function ProjectDetailScreen() {
             <View style={[styles.blueprintBanner, { backgroundColor: colors.warning + "12", borderColor: colors.warning }]}>
               <Feather name="upload" size={14} color={colors.warning} />
               <Text style={[styles.blueprintBannerText, { color: colors.warning }]}>
-                Engine export · Code gen, Build QA, Save systems & Project health
+                Engine export · Godot · Phaser · Unity · Generic ZIP
               </Text>
             </View>
+            <DownloadExportPanel
+              projectId={project.id}
+              projectTitle={project.title}
+              progress={project.progress}
+            />
             <ExportFrameworkPanel />
           </View>
         )}

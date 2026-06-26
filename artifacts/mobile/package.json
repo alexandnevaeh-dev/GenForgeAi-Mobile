@@ -54,5 +54,9 @@
     "typescript": "~5.9.2",
     "zod": "catalog:",
     "zod-validation-error": "^3.4.0"
+  },
+  "dependencies": {
+    "expo-file-system": "^56.0.8",
+    "expo-sharing": "^56.0.18"
   }
 }
