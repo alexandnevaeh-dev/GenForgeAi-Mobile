@@ -8,6 +8,7 @@ import generateRouter from "./generate";
 import healthRouter from "./health";
 import jobsRouter from "./jobs";
 import memoryRouter from "./memory";
+import notificationsRouter from "./notifications";
 import projectsRouter from "./projects";
 import usersRouter from "./users";
 
@@ -24,5 +25,6 @@ router.use(generateRouter);
 router.use(exportRouter);
 router.use(jobsRouter);
 router.use(memoryRouter);
+router.use(notificationsRouter);
 
 export default router;

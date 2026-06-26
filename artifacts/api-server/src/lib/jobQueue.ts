@@ -11,6 +11,7 @@ import { db } from "@workspace/db";
 import { jobs } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
+import { createNotification } from "./notify";
 
 export type JobStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
 
@@ -101,6 +102,13 @@ async function runNext(): Promise<void> {
       .where(eq(jobs.id, jobId));
 
     logger.info({ jobId }, "Job completed");
+    void createNotification({
+      userId: job.ownerId,
+      type: "job_completed",
+      title: "Generation complete",
+      body: job.label ? `"${job.label}" finished successfully.` : "Your background job finished successfully.",
+      data: { jobId, projectId: job.projectId ?? undefined },
+    });
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     logger.error({ jobId, error }, "Job failed");
@@ -113,6 +121,13 @@ async function runNext(): Promise<void> {
         updatedAt: new Date(),
       })
       .where(eq(jobs.id, jobId));
+    void createNotification({
+      userId: job.ownerId,
+      type: "job_failed",
+      title: "Generation failed",
+      body: job.label ? `"${job.label}" failed: ${error.slice(0, 120)}` : `Job failed: ${error.slice(0, 120)}`,
+      data: { jobId, projectId: job.projectId ?? undefined, error },
+    });
   } finally {
     running--;
     void runNext();

@@ -12,8 +12,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Drawer } from "@/components/Drawer";
+import { NotificationPanel } from "@/components/NotificationPanel";
 import { ProjectCard } from "@/components/ProjectCard";
 import { QuickAction } from "@/components/QuickAction";
+import { useNotifications } from "@/context/NotificationsContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -22,6 +24,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { projects, isLoading } = useProjects();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { unreadCount } = useNotifications();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
@@ -34,6 +38,7 @@ export default function HomeScreen() {
   return (
     <>
       <Drawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <NotificationPanel visible={notifOpen} onClose={() => setNotifOpen(false)} />
 
       <ScrollView
         style={[styles.scroll, { backgroundColor: colors.background }]}
@@ -54,10 +59,17 @@ export default function HomeScreen() {
               <Text style={{ color: colors.primary }}>AI</Text>
             </Text>
             <Pressable
+              onPress={() => setNotifOpen(true)}
               style={[styles.notifBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
             >
               <Feather name="bell" size={20} color={colors.foreground} />
-              <View style={[styles.notifDot, { backgroundColor: colors.primary }]} />
+              {unreadCount > 0 && (
+                <View style={[styles.notifBadge, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.notifBadgeText}>
+                    {unreadCount > 9 ? "9+" : String(unreadCount)}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           </View>
 
@@ -228,13 +240,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  notifDot: {
+  notifBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 6,
+    right: 6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  notifBadgeText: {
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
   },
   activeBanner: {
     borderRadius: 16,

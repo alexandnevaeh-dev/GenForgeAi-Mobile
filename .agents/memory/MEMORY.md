@@ -2,3 +2,4 @@
 - [Background job system](background-jobs.md) — in-process queue (no Redis), DB-persisted via `jobs` table, 2 concurrent; generate handler registered in app.ts via registerHandler("generate", …).
 - [Generation pipeline split](generation-pipeline.md) — SSE and async endpoints both call lib/generator.ts; never duplicate pipeline logic between routes.
 - [Agent memory system](agent-memory.md) — agent_memories table stores per-project/per-agent key/value facts; generator reads on start, writes after each phase; REST at /api/projects/:id/memory.
+- [Notifications system](notifications.md) — notifications table; jobQueue writes on job complete/fail; REST at /api/notifications; mobile NotificationsProvider polls every 30s; bell badge + modal panel on home screen.
