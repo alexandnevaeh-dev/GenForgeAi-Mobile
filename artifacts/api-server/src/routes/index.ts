@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import aiTasksRouter from "./ai-tasks";
+import assetsRouter from "./assets";
 import authRouter from "./auth";
 import chatRouter from "./chat";
 import generateRouter from "./generate";
@@ -14,6 +15,7 @@ router.use(authRouter);
 router.use(usersRouter);
 router.use(projectsRouter);
 router.use(aiTasksRouter);
+router.use(assetsRouter);
 router.use(chatRouter);
 router.use(generateRouter);
 

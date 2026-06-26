@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -28,8 +30,17 @@ import {
   generateTaskGraph,
   type PipelineTask,
 } from "@/constants/generation-pipeline";
+import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
+
+interface GeneratedAsset {
+  id: string;
+  name: string;
+  category: string;
+  url: string | null;
+  createdAt: string;
+}
 
 type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "export" | "quality" | "agents" | "memory";
 
@@ -38,7 +49,34 @@ export default function ProjectDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { projects, deleteProject } = useProjects();
+  const { accessToken, user } = useAuth();
+  const isGuest = !accessToken || user?.id === "guest";
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+
+  const [projectAssets, setProjectAssets] = useState<GeneratedAsset[]>([]);
+  const [assetsLoading, setAssetsLoading] = useState(false);
+
+  const fetchProjectAssets = useCallback(async () => {
+    if (isGuest || !id || !accessToken) return;
+    setAssetsLoading(true);
+    try {
+      const res = await fetch(`/api/projects/${id}/assets`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { assets: GeneratedAsset[] };
+        setProjectAssets(data.assets);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setAssetsLoading(false);
+    }
+  }, [id, isGuest, accessToken]);
+
+  useEffect(() => {
+    if (activeTab === "assets") fetchProjectAssets();
+  }, [activeTab, fetchProjectAssets]);
 
   const project = projects.find((p) => p.id === id);
   const topPad = Platform.OS === "web" ? 67 : insets.top + 12;
@@ -320,6 +358,40 @@ export default function ProjectDetailScreen() {
                 Asset pipeline · Art, Audio, Database & Living Asset System
               </Text>
             </View>
+
+            {/* Generated images gallery */}
+            {!isGuest && (
+              <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>GENERATED IMAGES</Text>
+                  <Pressable onPress={fetchProjectAssets} style={styles.refreshBtn}>
+                    <Feather name="refresh-cw" size={13} color={colors.mutedForeground} />
+                  </Pressable>
+                </View>
+                {assetsLoading ? (
+                  <View style={styles.assetsLoading}>
+                    <ActivityIndicator color={colors.primary} size="small" />
+                    <Text style={[styles.assetsLoadingText, { color: colors.mutedForeground }]}>Loading images…</Text>
+                  </View>
+                ) : projectAssets.length === 0 ? (
+                  <View style={styles.assetsEmpty}>
+                    <Feather name="image" size={22} color={colors.mutedForeground} />
+                    <Text style={[styles.assetsEmptyText, { color: colors.mutedForeground }]}>
+                      {project.status === "in_progress" || project.status === "complete"
+                        ? "No images generated yet. Tap Generate to create artwork."
+                        : "Images appear here after AI generation runs."}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.imageGrid}>
+                    {projectAssets.map((asset) => (
+                      <AssetImageCard key={asset.id} asset={asset} colors={colors} />
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
             <AssetGenerationPanel />
           </View>
         )}
@@ -406,6 +478,72 @@ export default function ProjectDetailScreen() {
     </View>
   );
 }
+
+const ASSET_CAT_COLOR: Record<string, string> = {
+  cover: "#7B2FFF",
+  character: "#2B7FFF",
+  boss: "#EF4444",
+  environment: "#22C55E",
+};
+const ASSET_CAT_ICON: Record<string, string> = {
+  cover: "image",
+  character: "user",
+  boss: "shield",
+  environment: "map",
+};
+
+function AssetImageCard({
+  asset,
+  colors,
+}: {
+  asset: GeneratedAsset;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [imgErr, setImgErr] = useState(false);
+  const color = ASSET_CAT_COLOR[asset.category] ?? "#2B7FFF";
+  const icon = ASSET_CAT_ICON[asset.category] ?? "image";
+  const hasImg = !!asset.url && !imgErr;
+
+  return (
+    <View style={[imgStyles.card, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+      {hasImg ? (
+        <Image
+          source={{ uri: asset.url! }}
+          style={imgStyles.image}
+          resizeMode="cover"
+          onError={() => setImgErr(true)}
+        />
+      ) : (
+        <View style={[imgStyles.placeholder, { backgroundColor: color + "22" }]}>
+          <Feather name={icon as any} size={22} color={color} />
+        </View>
+      )}
+      <View style={imgStyles.meta}>
+        <View style={[imgStyles.catChip, { backgroundColor: color + "22" }]}>
+          <Text style={[imgStyles.catText, { color }]}>{asset.category.toUpperCase()}</Text>
+        </View>
+        <Text style={[imgStyles.name, { color: colors.foreground }]} numberOfLines={2}>
+          {asset.name}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const imgStyles = StyleSheet.create({
+  card: {
+    width: "47%",
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  image: { width: "100%", aspectRatio: 1 },
+  placeholder: { width: "100%", aspectRatio: 1, alignItems: "center", justifyContent: "center" },
+  meta: { padding: 8, gap: 4 },
+  catChip: { alignSelf: "flex-start", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
+  catText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  name: { fontSize: 11, fontFamily: "Inter_500Medium", lineHeight: 15 },
+});
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
@@ -508,4 +646,11 @@ const styles = StyleSheet.create({
   logTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
   notFound: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   notFoundText: { fontSize: 16, fontFamily: "Inter_400Regular" },
+  sectionHeaderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  refreshBtn: { padding: 4 },
+  assetsLoading: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
+  assetsLoadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  assetsEmpty: { alignItems: "center", gap: 8, paddingVertical: 20 },
+  assetsEmptyText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
+  imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
 });
