@@ -66,6 +66,54 @@ export async function genEnvironmentArt(ctx: GameImageCtx, projectId: string): P
   return uploadBuffer(`assets/${projectId}/environment-${Date.now()}.png`, buf, "image/png");
 }
 
+const STYLE_PROMPTS: Record<string, string> = {
+  "Pixel Art":    "16-bit pixel art, crisp clean pixels, vibrant colors, Shovel Knight / Owlboy style",
+  "Hand-painted": "hand-painted watercolor illustration, soft expressive brush strokes, painterly texture",
+  "Anime":        "anime art style, clean linework, vibrant colors, Japanese animation aesthetic",
+  "Realistic":    "photorealistic digital painting, cinematic lighting, highly detailed",
+  "Cartoon":      "cartoon illustration, bold outlines, bright flat colors, fun stylized look",
+  "Low Poly":     "low poly 3D art, geometric shapes, flat shading, minimal detail, clean",
+  "Stylized 3D":  "stylized 3D render, Pixar-inspired, soft lighting, expressive characters",
+  "Fantasy":      "epic fantasy concept art, dramatic lighting, intricate detail, oil-painting finish",
+  "Sci-Fi":       "science fiction concept art, futuristic design, glowing elements, digital painting",
+  "Horror":       "dark horror art, gothic atmosphere, ominous shadows, unsettling, eerie",
+  "Retro":        "retro 8-bit NES style, limited color palette, chunky pixels, nostalgic",
+  "Cyberpunk":    "cyberpunk neon art, dark city backdrop, neon lights, digital glitch aesthetic",
+  "Steampunk":    "steampunk illustration, brass gears and cogs, Victorian industrial aesthetic",
+  "Voxel":        "voxel art, blocky 3D cubes, bright colors, isometric view, Minecraft-inspired",
+  "Chibi":        "chibi kawaii art, super-deformed proportions, big expressive eyes, adorable style",
+  "Isometric":    "isometric pixel art, 45-degree axonometric view, detailed environment, clean",
+};
+
+/**
+ * Generate a custom asset from a user prompt, style, and category.
+ * Returns the persistent GCS URL.
+ */
+export async function genCustomAsset(opts: {
+  prompt: string;
+  style: string;
+  category: string;
+  projectId?: string;
+}): Promise<string> {
+  const styleHint = STYLE_PROMPTS[opts.style] ?? `${opts.style} art style`;
+  const catHint =
+    opts.category === "sprite"      ? "game character sprite, transparent background, game-ready" :
+    opts.category === "portrait"    ? "character portrait, face and shoulders, expressive, detailed" :
+    opts.category === "background"  ? "wide landscape scene, game background art, horizontal composition" :
+    opts.category === "icon"        ? "game UI icon, small and readable, clear silhouette, square format" :
+    opts.category === "tileset"     ? "game tileset preview, seamlessly tiling texture pattern, top-down view" :
+    opts.category === "vfx"        ? "VFX sprite, particle effect, magic or impact effect, transparent background" :
+    opts.category === "environment" ? "environment art, detailed scene, game concept art, wide shot" :
+    opts.category === "cover"       ? "game cover art, dramatic composition, title-ready artwork, cinematic" :
+    "game art asset";
+  const fullPrompt = `${styleHint}. ${catHint}. ${opts.prompt}. High quality, game-ready, professional.`;
+  const size = "1024x1024" as const;
+  const buf = await generateImageBuffer(fullPrompt, size);
+  const slug = opts.projectId ?? "standalone";
+  const url = await uploadBuffer(`assets/${slug}/custom-${opts.category}-${Date.now()}.png`, buf, "image/png");
+  return url;
+}
+
 /**
  * Regenerate a single asset image by category.
  * Returns the new persistent GCS URL.

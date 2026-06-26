@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import AssetCreatorModal, { type CreatedAsset } from "@/components/AssetCreatorModal";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -87,6 +88,7 @@ export default function AssetsScreen() {
   const [lightbox, setLightbox] = useState<ApiAsset | null>(null);
   const [regenLoading, setRegenLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [creatorVisible, setCreatorVisible] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
@@ -169,6 +171,25 @@ export default function AssetsScreen() {
     ]);
   }, [accessToken]);
 
+  const handleAssetCreated = useCallback((asset: CreatedAsset) => {
+    const newAsset: ApiAsset = {
+      id:           asset.id,
+      projectId:    null,
+      name:         asset.name,
+      type:         asset.category,
+      category:     asset.category,
+      url:          asset.url,
+      thumbnailUrl: asset.thumbnailUrl,
+      mimeType:     "image/png",
+      tags:         asset.tags,
+      metadata:     null,
+      isFavorite:   false,
+      createdAt:    asset.createdAt,
+    };
+    setAllAssets((prev) => [newAsset, ...prev]);
+    setActiveFilter("all");
+  }, []);
+
   const filtered = activeFilter === "all"
     ? allAssets
     : allAssets.filter((a) => a.category === activeFilter);
@@ -181,6 +202,23 @@ export default function AssetsScreen() {
 
   return (
     <>
+    {/* ── Asset Creator Modal ───────────────────────────────────────────── */}
+    <AssetCreatorModal
+      visible={creatorVisible}
+      onClose={() => setCreatorVisible(false)}
+      onCreated={handleAssetCreated}
+    />
+
+    {/* ── Floating Action Button ────────────────────────────────────────── */}
+    {!isGuest && (
+      <Pressable
+        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setCreatorVisible(true); }}
+        style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad - 56 }]}
+      >
+        <Feather name="plus" size={22} color="#fff" />
+      </Pressable>
+    )}
+
     {/* ── Asset Lightbox Modal ─────────────────────────────────────────── */}
     <Modal
       visible={!!lightbox}
@@ -524,4 +562,19 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   lightboxBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
+  fab: {
+    position: "absolute",
+    right: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#2B7FFF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 100,
+  },
 });

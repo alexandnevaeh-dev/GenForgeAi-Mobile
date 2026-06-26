@@ -2,8 +2,9 @@ import { db } from "@workspace/db";
 import { assets, projects } from "@workspace/db/schema";
 import { and, eq, desc } from "drizzle-orm";
 import { Router } from "express";
+import { z } from "zod";
 import { requireAuth } from "../middleware/requireAuth";
-import { regenAsset, type GameImageCtx } from "../lib/imageGen";
+import { genCustomAsset, regenAsset, type GameImageCtx } from "../lib/imageGen";
 
 const router = Router();
 
@@ -151,6 +152,66 @@ router.post("/assets/:id/regenerate", requireAuth, async (req, res) => {
   } catch (err) {
     req.log.error({ err, assetId: id }, "Asset regeneration failed");
     res.status(500).json({ error: "Image generation failed" });
+  }
+});
+
+// ── POST /assets/generate — on-demand custom asset creation ────────────────
+const GenerateAssetSchema = z.object({
+  prompt:    z.string().min(3).max(500),
+  style:     z.string().min(1),
+  category:  z.enum(["sprite", "portrait", "background", "icon", "tileset", "vfx", "environment", "cover"]),
+  name:      z.string().min(1).max(120).optional(),
+  projectId: z.string().optional(),
+});
+
+router.post("/assets/generate", requireAuth, async (req, res) => {
+  const parsed = GenerateAssetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request", details: parsed.error.flatten() });
+    return;
+  }
+
+  const { prompt, style, category, projectId, name } = parsed.data;
+
+  // If a projectId was provided, verify it belongs to the authenticated user
+  if (projectId) {
+    const [proj] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, req.user!.sub)))
+      .limit(1);
+    if (!proj) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
+  }
+
+  try {
+    const url = await genCustomAsset({ prompt, style, category, projectId });
+
+    const assetName = name ?? `${style} ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+
+    const [asset] = await db
+      .insert(assets)
+      .values({
+        ownerId:      req.user!.sub,
+        projectId:    projectId ?? null,
+        name:         assetName,
+        type:         ["sprite", "portrait", "icon", "vfx"].includes(category) ? "image" : category === "tileset" ? "image" : "image",
+        category,
+        url,
+        thumbnailUrl: url,
+        mimeType:     "image/png",
+        tags:         [style, category, "custom"],
+        metadata:     { prompt, style, generated: true },
+        isFavorite:   false,
+      })
+      .returning();
+
+    res.status(201).json({ asset });
+  } catch (err) {
+    req.log.error({ err }, "Custom asset generation failed");
+    res.status(500).json({ error: "Image generation failed. Please try again." });
   }
 });
 
