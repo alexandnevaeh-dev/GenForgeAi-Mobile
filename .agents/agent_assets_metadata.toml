@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "e-4wOGTT0oJymPL-wABTX"
@@ -12,3 +11,33 @@ id = "T_dZ8FBp_pi8apZx1z8H6"
 uri = "file://artifacts/mobile/assets/images/splash.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "cDhPB-T7dfBFHf6y4M-Ke"
+uri = "file://PROJECT_AUDIT.md"
+type = "text"
+title = "PROJECT_AUDIT.md"
+
+[[outputs]]
+id = "uQuwwepaHO-jO8DpVBGzx"
+uri = "file://ARCHITECTURE.md"
+type = "text"
+title = "ARCHITECTURE.md"
+
+[[outputs]]
+id = "cMofMCwanc6q-tjct87xI"
+uri = "file://DATABASE.md"
+type = "text"
+title = "DATABASE.md"
+
+[[outputs]]
+id = "PxvlEhwIVCCVMDDb6t0zJ"
+uri = "file://API.md"
+type = "text"
+title = "API.md"
+
+[[outputs]]
+id = "5-TsaGdRFFOHk_bUbtnOz"
+uri = "file://FEATURES.md"
+type = "text"
+title = "FEATURES.md"
