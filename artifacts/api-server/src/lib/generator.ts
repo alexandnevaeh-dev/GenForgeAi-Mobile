@@ -183,10 +183,10 @@ Number of Bosses: ${p.numBosses}`;
   onEvent({ event: "asset_generating", phase: 4, message: "Generating cover art, protagonist, boss, and environment art…" });
 
   const [coverRes, protagonistRes, bossRes, envRes] = await Promise.allSettled([
-    genCoverArt(imgCtx),
-    genProtagonistArt(imgCtx),
-    genBossArt(imgCtx),
-    genEnvironmentArt(imgCtx),
+    genCoverArt(imgCtx, projectId),
+    genProtagonistArt(imgCtx, projectId),
+    genBossArt(imgCtx, projectId),
+    genEnvironmentArt(imgCtx, projectId),
   ]);
 
   const now = new Date();
@@ -219,7 +219,7 @@ Number of Bosses: ${p.numBosses}`;
           thumbnailUrl: img.url,
           mimeType: img.mimeType,
           tags: [p.genre, p.artStyle],
-          metadata: { generatedBy: "gpt-image-1", phase: 4 },
+          metadata: { generatedBy: "gpt-image-1", phase: 4, imgCtx },
           createdAt: now,
           updatedAt: now,
         }))

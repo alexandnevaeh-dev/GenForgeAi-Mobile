@@ -1,0 +1,382 @@
+GenForgeAI Mobile Engineering Specification
+
+Official Build v1.0
+
+Part 2 — Mobile UI, Authentication & Project Management
+
+
+---
+
+Mobile Navigation
+
+The app uses a persistent bottom navigation bar.
+
+Home
+Projects
+Generate
+Community
+Profile
+
+Additional screens are accessed through stack navigation.
+
+Splash
+Login
+Register
+Forgot Password
+Verify Email
+Dashboard
+Project Details
+Game Generator
+AI Chat
+Asset Studio
+Export Center
+Marketplace
+Notifications
+Settings
+Billing
+Admin (restricted)
+
+
+---
+
+Splash Screen
+
+Displays:
+
+Animated GenForgeAI logo
+
+Loading progress
+
+Version number
+
+Server status
+
+AI services status
+
+
+After initialization:
+
+Existing user → Dashboard
+
+New user → Welcome
+
+Not signed in → Login
+
+
+
+---
+
+Authentication
+
+Support:
+
+Email/password
+
+Google Sign-In
+
+Apple Sign-In (iOS)
+
+Guest mode (limited)
+
+Password reset
+
+Email verification
+
+Session refresh
+
+Multi-device login
+
+Secure token storage
+
+
+
+---
+
+User Profile
+
+Each user has:
+
+User ID
+Username
+Display Name
+Avatar
+Email
+Subscription Tier
+XP
+Creator Level
+Projects
+Followers
+Following
+Achievements
+Badges
+Preferences
+Storage Used
+
+
+---
+
+Dashboard
+
+Sections:
+
+Continue Working
+
+Recent Projects
+
+Recommended Templates
+
+AI Suggestions
+
+Community Spotlight
+
+Latest Updates
+
+Daily Challenge
+
+Quick Create
+
+
+Quick actions:
+
+New RPG
+
+New Platformer
+
+New Metroidvania
+
+New Shooter
+
+New Puzzle
+
+Import Project
+
+
+
+---
+
+Project Structure
+
+Each project contains:
+
+Game Info
+Game Design Document
+Story
+Characters
+World
+Levels
+Mechanics
+Dialogue
+Sprites
+Animations
+Audio
+Music
+UI
+Code
+Testing
+Optimization
+Exports
+Documentation
+
+
+---
+
+Project Status
+
+Each module tracks progress.
+
+Not Started
+Planning
+Generating
+Review
+Editing
+Testing
+Optimizing
+Completed
+
+Progress is shown as percentages and checklists.
+
+
+---
+
+Game Creation Wizard
+
+Step 1:
+
+Game title
+
+Genre
+
+Art style
+
+
+Step 2:
+
+Target platform
+
+Resolution
+
+Screen orientation
+
+
+Step 3:
+
+Multiplayer?
+
+Controller support?
+
+Difficulty
+
+
+Step 4:
+
+Describe your game in natural language
+
+
+Step 5:
+
+AI generates the Game Design Document
+
+
+
+---
+
+AI Chat
+
+The assistant can:
+
+Explain mechanics
+
+Rewrite dialogue
+
+Generate quests
+
+Balance gameplay
+
+Suggest improvements
+
+Generate code
+
+Create assets
+
+Export builds
+
+
+Conversation history is stored per project.
+
+
+---
+
+Notifications
+
+Categories:
+
+Generation complete
+
+Export ready
+
+AI suggestions
+
+Community replies
+
+Marketplace updates
+
+System announcements
+
+
+
+---
+
+Cloud Sync
+
+Automatically syncs:
+
+Projects
+
+Assets
+
+AI chat history
+
+Settings
+
+Saved templates
+
+Export history
+
+
+Offline edits are queued and synchronized when the device reconnects.
+
+
+---
+
+Settings
+
+Users can configure:
+
+Theme (Light/Dark/System)
+
+AI generation quality
+
+Default export engine
+
+Notification preferences
+
+Language
+
+Storage management
+
+Privacy options
+
+Account management
+
+
+
+---
+
+Database Schema (Core)
+
+Initial tables:
+
+Users
+Projects
+ProjectVersions
+Chats
+Messages
+Assets
+Sprites
+Animations
+Audio
+Music
+GameDocuments
+Builds
+Exports
+Notifications
+Subscriptions
+Achievements
+Templates
+CommunityPosts
+Comments
+Likes
+
+Each project is versioned to support rollback and collaboration.
+
+
+---
+
+Milestone 2 Goal
+
+By the end of this milestone, GenForgeAI should allow users to:
+
+Sign up and log in
+
+Create and manage projects
+
+Use the AI chat
+
+Generate and save Game Design Documents
+
+Sync projects across devices
+
+Manage profiles and settings
+
+
+The next section (Part 3) will implement the AI orchestration layer, including the model router, free-model fallback system, task queue, memory service, and the complete multi-agent generation pipeline that powers GenForgeAI.

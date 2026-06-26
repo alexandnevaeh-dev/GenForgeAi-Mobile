@@ -1,4 +1,5 @@
 import { generateImageBuffer } from "@workspace/integrations-openai-ai-server";
+import { uploadBuffer } from "./objectStorage";
 
 export interface GameImageCtx {
   title: string;
@@ -24,41 +25,37 @@ function styleHint(artStyle: string): string {
   }
 }
 
-function toDataUrl(buf: Buffer): string {
-  return `data:image/png;base64,${buf.toString("base64")}`;
-}
-
-export async function genCoverArt(ctx: GameImageCtx): Promise<string> {
+export async function genCoverArt(ctx: GameImageCtx, projectId: string): Promise<string> {
   const prompt =
     `Game cover art for "${ctx.title}", a ${ctx.genre} game. ` +
     `${ctx.prompt.slice(0, 180)}. ` +
     `Style: ${styleHint(ctx.artStyle)}. ` +
     `Cinematic composition, dramatic lighting, hero and world visible. No text or logos.`;
   const buf = await generateImageBuffer(prompt, "1024x1024");
-  return toDataUrl(buf);
+  return uploadBuffer(`assets/${projectId}/cover-${Date.now()}.png`, buf, "image/png");
 }
 
-export async function genProtagonistArt(ctx: GameImageCtx): Promise<string> {
+export async function genProtagonistArt(ctx: GameImageCtx, projectId: string): Promise<string> {
   const name = ctx.protagonistName ?? "the protagonist";
   const prompt =
     `${styleHint(ctx.artStyle)} character concept art for ${name}, ` +
     `hero of "${ctx.title}" (${ctx.genre} game). ` +
     `Full body, facing forward, clear white background, detailed equipment and costume. No text.`;
   const buf = await generateImageBuffer(prompt, "512x512");
-  return toDataUrl(buf);
+  return uploadBuffer(`assets/${projectId}/protagonist-${Date.now()}.png`, buf, "image/png");
 }
 
-export async function genBossArt(ctx: GameImageCtx): Promise<string> {
+export async function genBossArt(ctx: GameImageCtx, projectId: string): Promise<string> {
   const name = ctx.bossName ?? "the main antagonist";
   const prompt =
     `${styleHint(ctx.artStyle)} character concept art for ${name}, ` +
     `primary antagonist of "${ctx.title}" (${ctx.genre} game). ` +
     `Menacing pose, dramatic design, white background. No text.`;
   const buf = await generateImageBuffer(prompt, "512x512");
-  return toDataUrl(buf);
+  return uploadBuffer(`assets/${projectId}/boss-${Date.now()}.png`, buf, "image/png");
 }
 
-export async function genEnvironmentArt(ctx: GameImageCtx): Promise<string> {
+export async function genEnvironmentArt(ctx: GameImageCtx, projectId: string): Promise<string> {
   const world = ctx.worldName ?? "the game world";
   const toneStr = ctx.tone ? `${ctx.tone} atmosphere. ` : "";
   const prompt =
@@ -66,5 +63,22 @@ export async function genEnvironmentArt(ctx: GameImageCtx): Promise<string> {
     `in "${ctx.title}" (${ctx.genre} game). ` +
     `${toneStr}Detailed landscape, atmospheric lighting, no characters, no text.`;
   const buf = await generateImageBuffer(prompt, "512x512");
-  return toDataUrl(buf);
+  return uploadBuffer(`assets/${projectId}/environment-${Date.now()}.png`, buf, "image/png");
+}
+
+/**
+ * Regenerate a single asset image by category.
+ * Returns the new persistent GCS URL.
+ */
+export async function regenAsset(
+  category: "cover" | "character" | "boss" | "environment",
+  ctx: GameImageCtx,
+  projectId: string
+): Promise<string> {
+  switch (category) {
+    case "cover":       return genCoverArt(ctx, projectId);
+    case "character":   return genProtagonistArt(ctx, projectId);
+    case "boss":        return genBossArt(ctx, projectId);
+    case "environment": return genEnvironmentArt(ctx, projectId);
+  }
 }
