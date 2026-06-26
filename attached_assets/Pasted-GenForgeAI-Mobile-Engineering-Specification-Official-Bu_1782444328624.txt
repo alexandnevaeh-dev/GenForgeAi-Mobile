@@ -1,0 +1,374 @@
+GenForgeAI Mobile Engineering Specification
+
+Official Build v1.0
+
+Part 3 — AI Orchestration, Model Router & Generation Engine
+
+This section is the core intelligence behind GenForgeAI. It turns a single user prompt into a coordinated workflow across specialized AI agents, selecting the most appropriate available models and recovering automatically if a model fails.
+
+
+---
+
+AI Architecture
+
+User Prompt
+      │
+      ▼
+Intent Analyzer
+      │
+      ▼
+Master Game Director
+      │
+      ▼
+Task Planner
+      │
+      ▼
+Agent Coordinator
+      │
+ ┌────┼───────────────────────────┐
+ ▼    ▼        ▼        ▼         ▼
+Story Art     Code    Audio    Testing
+Agent Agent   Agent   Agent    Agent
+      │
+      ▼
+Validator
+      │
+      ▼
+Optimizer
+      │
+      ▼
+Project Builder
+      │
+      ▼
+Export Manager
+
+
+---
+
+Core AI Services
+
+Every generation request passes through these services:
+
+Intent Analyzer
+
+Master Game Director
+
+Model Router
+
+Prompt Orchestrator
+
+Agent Coordinator
+
+Task Queue
+
+Memory Service
+
+Quality Validator
+
+Optimization Engine
+
+Export Builder
+
+
+
+---
+
+Master Game Director
+
+The Master Game Director is the "brain" of GenForgeAI.
+
+Responsibilities include:
+
+Understanding the user's vision
+
+Breaking work into subtasks
+
+Assigning tasks to AI agents
+
+Monitoring generation progress
+
+Resolving conflicts between outputs
+
+Ensuring consistency across the project
+
+Maintaining design documents
+
+Tracking milestones
+
+
+
+---
+
+AI Model Router
+
+The router evaluates each task and selects the best available model based on:
+
+Task type
+
+Context length
+
+Cost
+
+Speed
+
+Availability
+
+Quality score
+
+Current load
+
+User subscription tier
+
+
+Example routing:
+
+Story Writing
+→ Large language model
+
+Programming
+→ Code-specialized model
+
+Pixel Art
+→ Image generation model
+
+Music
+→ Audio generation model
+
+Testing
+→ Code reasoning model
+
+If the preferred model is unavailable, the router automatically retries with the next suitable model.
+
+
+---
+
+Fallback System
+
+Every task includes retry logic:
+
+1. Preferred model
+
+
+2. Secondary model
+
+
+3. Tertiary model
+
+
+4. Queue until available
+
+
+5. Notify user if manual action is required
+
+
+
+The goal is to maximize successful generation without user intervention.
+
+
+---
+
+Generation Queue
+
+Each generation request receives:
+
+Request ID
+Project ID
+Priority
+Task Type
+Assigned Agent
+Selected Model
+Status
+Progress
+Retry Count
+Timestamp
+
+Statuses:
+
+Queued
+
+Preparing
+
+Generating
+
+Validating
+
+Optimizing
+
+Complete
+
+Failed
+
+Retrying
+
+
+
+---
+
+Memory Service
+
+The memory service keeps the project consistent.
+
+It stores:
+
+Story lore
+
+Character biographies
+
+World rules
+
+Dialogue history
+
+Item database
+
+Quest state
+
+Coding conventions
+
+UI style guide
+
+Art direction
+
+Audio themes
+
+
+Agents consult this memory before generating new content.
+
+
+---
+
+Prompt Orchestrator
+
+Rather than sending one huge prompt, the orchestrator:
+
+Splits requests into focused prompts
+
+Adds relevant project context
+
+Injects memory
+
+Enforces output formats
+
+Validates responses
+
+Reassembles results into a cohesive project
+
+
+
+---
+
+Parallel Generation
+
+Independent tasks run simultaneously where possible.
+
+Example:
+
+Story generation
+
+Character concepts
+
+World map
+
+Music themes
+
+UI wireframes
+
+
+These can proceed in parallel, while dependent tasks (such as dialogue that relies on finalized story details) wait until prerequisites are complete.
+
+
+---
+
+Quality Validation
+
+Generated outputs are checked for:
+
+Internal consistency
+
+Missing information
+
+Formatting issues
+
+Logic errors
+
+Duplicate content
+
+Basic code syntax
+
+Asset completeness
+
+Naming conventions
+
+
+Outputs that fail validation are automatically revised or regenerated when feasible.
+
+
+---
+
+Project Builder
+
+The builder assembles all generated pieces into a structured project.
+
+Output includes:
+
+Game Design Document
+
+Source code
+
+Assets
+
+Audio
+
+Documentation
+
+Metadata
+
+Export configuration
+
+Version manifest
+
+
+
+---
+
+Live Progress Tracking
+
+During generation, users see:
+
+Current stage
+
+Active AI agent
+
+Estimated time remaining
+
+Completed tasks
+
+Remaining tasks
+
+Overall progress
+
+Generation logs (advanced view)
+
+
+
+---
+
+Milestone 3 Goal
+
+By the end of this milestone, GenForgeAI should be able to:
+
+Accept a natural-language game idea
+
+Plan the work automatically
+
+Coordinate specialized AI agents
+
+Route tasks to appropriate AI models with fallback support
+
+Maintain project-wide consistency through shared memory
+
+Validate generated content
+
+Assemble a complete, editable game project ready for asset generation, coding, testing, and export.
+
+
+Part 4 will build the complete Game Design Document Generator, including genre templates, story generation, world building, character systems, gameplay mechanics, progression, quests, and all supporting design tools.

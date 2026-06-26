@@ -11,6 +11,7 @@ import memoryRouter from "./memory";
 import notificationsRouter from "./notifications";
 import projectChatRouter from "./projectChat";
 import projectsRouter from "./projects";
+import templatesRouter from "./templates";
 import usersRouter from "./users";
 
 const router: IRouter = Router();
@@ -28,5 +29,6 @@ router.use(jobsRouter);
 router.use(memoryRouter);
 router.use(notificationsRouter);
 router.use(projectChatRouter);
+router.use(templatesRouter);
 
 export default router;

@@ -5,6 +5,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { registerHandler, recoverStalledJobs } from "./lib/jobQueue";
 import { runGeneration, type GenerateParams } from "./lib/generator";
+import { seedTemplates } from "./lib/seedTemplates";
 
 // ── Register job handlers ────────────────────────────────────────────────────
 registerHandler("generate", async (jobId, inputData, updateProgress) => {
@@ -40,6 +41,9 @@ registerHandler("generate", async (jobId, inputData, updateProgress) => {
 
 // ── Recover stalled jobs from previous process ───────────────────────────────
 void recoverStalledJobs();
+
+// ── Seed reference data ───────────────────────────────────────────────────────
+void seedTemplates();
 
 const app: Express = express();
 

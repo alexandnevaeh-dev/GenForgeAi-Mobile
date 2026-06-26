@@ -189,6 +189,29 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const templates = pgTable("templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  author: text("author").notNull().default("ForgeStudio"),
+  description: text("description").notNull().default(""),
+  genre: text("genre").notNull().default("RPG"),
+  artStyle: text("art_style").notNull().default("Pixel Art"),
+  difficulty: text("difficulty").notNull().default("Beginner"),
+  category: text("category").notNull().default("templates"),
+  tags: json("tags").$type<string[]>().default([]),
+  rating: integer("rating").notNull().default(47),
+  reviewCount: integer("review_count").notNull().default(0),
+  usageCount: integer("usage_count").notNull().default(0),
+  isPremium: boolean("is_premium").notNull().default(false),
+  priceCents: integer("price_cents").notNull().default(0),
+  badge: text("badge"),
+  promptHint: text("prompt_hint").notNull().default(""),
+  coverImageUrl: text("cover_image_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Project = typeof projects.$inferSelect;
