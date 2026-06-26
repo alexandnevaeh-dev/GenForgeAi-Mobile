@@ -38,6 +38,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 import { GenerationConsole, type LiveJob } from "@/components/GenerationConsole";
+import { IntentAnalyzerPanel } from "@/components/IntentAnalyzerPanel";
 import { ProjectMemoryPanel } from "@/components/ProjectMemoryPanel";
 
 interface GeneratedAsset {
@@ -351,6 +352,16 @@ export default function ProjectDetailScreen() {
                 ))}
               </View>
             </View>
+
+            {/* Intent Analyzer */}
+            {!isGuest && (
+              <IntentAnalyzerPanel
+                projectId={project.id}
+                prompt={project.prompt}
+                genre={project.genre}
+                artStyle={project.artStyle}
+              />
+            )}
 
             {/* Pipeline steps */}
             <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>GENERATION PIPELINE</Text>
