@@ -26,6 +26,9 @@ import { ExportFrameworkPanel } from "@/components/ExportFrameworkPanel";
 import { ExportValidationPanel } from "@/components/ExportValidationPanel";
 import { ProceduralSystemsPanel } from "@/components/ProceduralSystemsPanel";
 import { QualityGates } from "@/components/QualityGates";
+import { QADashboard } from "@/components/QADashboard";
+import { PlaytestPanel } from "@/components/PlaytestPanel";
+import { BalanceTunerPanel } from "@/components/BalanceTunerPanel";
 import { TaskGraph } from "@/components/TaskGraph";
 import {
   generateAnalysis,
@@ -555,9 +558,12 @@ export default function ProjectDetailScreen() {
             <View style={[styles.blueprintBanner, { backgroundColor: colors.success + "12", borderColor: colors.success }]}>
               <Feather name="shield" size={14} color={colors.success} />
               <Text style={[styles.blueprintBannerText, { color: colors.success }]}>
-                8 quality gates · Run after each generation phase
+                AI QA · 8 gates · Playtesting · Balance tuner · A11y
               </Text>
             </View>
+            <QADashboard projectId={project.id as unknown as number} />
+            <PlaytestPanel projectId={project.id as unknown as number} />
+            <BalanceTunerPanel projectId={project.id as unknown as number} />
             <QualityGates />
           </View>
         )}
