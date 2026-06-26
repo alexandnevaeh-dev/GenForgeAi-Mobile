@@ -1,0 +1,1 @@
+- [AI Router Architecture](ai-router-architecture.md) — task-aware model routing via OpenRouter free tier; workspace lib exports must point to ./src/index.ts not ./dist/ for esbuild compatibility.

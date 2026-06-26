@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { streamTask } from "@workspace/ai-router";
 import { Router } from "express";
 import { z } from "zod";
 import { optionalAuth } from "../middleware/requireAuth";
@@ -46,24 +46,16 @@ router.post("/chat", optionalAuth, async (req, res) => {
   res.setHeader("Connection", "keep-alive");
 
   try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-5-mini",
-      max_completion_tokens: 2048,
-      messages: [
+    await streamTask(
+      "chat",
+      [
         { role: "system", content: SYSTEM_PROMPT },
         ...result.data.messages,
       ],
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      (event) => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
       }
-    }
-
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    );
     res.end();
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Generation failed";

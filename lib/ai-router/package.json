@@ -1,0 +1,16 @@
+{
+  "name": "@workspace/ai-router",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workspace/integrations-openrouter-ai": "workspace:*",
+    "openai": "^6.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29"
+  }
+}
