@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AgentNetwork } from "@/components/AgentNetwork";
 import { AIProgressIndicator } from "@/components/AIProgressIndicator";
 import { BlueprintPanel } from "@/components/BlueprintPanel";
+import { ProjectChatPanel } from "@/components/ProjectChatPanel";
 import { GenLogicPanel } from "@/components/GenLogicPanel";
 import { AssetGenerationPanel } from "@/components/AssetGenerationPanel";
 import { DownloadExportPanel } from "@/components/DownloadExportPanel";
@@ -45,7 +46,7 @@ interface GeneratedAsset {
   createdAt: string;
 }
 
-type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "export" | "quality" | "agents" | "memory";
+type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "export" | "quality" | "agents" | "memory" | "chat";
 
 export default function ProjectDetailScreen() {
   const colors = useColors();
@@ -207,6 +208,7 @@ export default function ProjectDetailScreen() {
 
   const TABS: { key: Tab; label: string; icon: string }[] = [
     { key: "overview", label: "Overview", icon: "home" },
+    { key: "chat", label: "AI Chat", icon: "message-circle" },
     { key: "blueprint", label: "Blueprint", icon: "file-text" },
     { key: "tasks", label: "Tasks", icon: "list" },
     { key: "systems", label: "Systems", icon: "layers" },
@@ -281,9 +283,20 @@ export default function ProjectDetailScreen() {
         ))}
       </ScrollView>
 
+      {/* ─── CHAT (outside scroll — owns its own FlatList) ─── */}
+      {activeTab === "chat" && (
+        <ProjectChatPanel
+          projectId={project.id}
+          projectTitle={project.title}
+          projectGenre={project.genre}
+          hasGeneratedData={(project.progress ?? 0) > 0}
+        />
+      )}
+
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: bottomPad + 16 }}
         showsVerticalScrollIndicator={false}
+        style={activeTab === "chat" ? { display: "none" } : undefined}
       >
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
