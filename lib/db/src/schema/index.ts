@@ -182,6 +182,7 @@ export const jobs = pgTable("jobs", {
   label: text("label").notNull().default(""),
   inputData: json("input_data").$type<Record<string, unknown>>().default({}),
   result: json("result").$type<Record<string, unknown>>(),
+  logs: json("logs").$type<string[]>().default([]),
   error: text("error"),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),

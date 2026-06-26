@@ -3,7 +3,7 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { registerHandler, recoverStalledJobs } from "./lib/jobQueue";
+import { registerHandler, recoverStalledJobs, appendLog } from "./lib/jobQueue";
 import { runGeneration, type GenerateParams } from "./lib/generator";
 import { seedTemplates } from "./lib/seedTemplates";
 
@@ -26,15 +26,46 @@ registerHandler("generate", async (jobId, inputData, updateProgress) => {
   };
 
   await runGeneration(projectId, ownerId, params, async (event) => {
+    if (event.event === "memory_loaded") {
+      const count = event.count as number;
+      await appendLog(jobId, count > 0
+        ? `📚 Loaded ${count} memory entries from previous run`
+        : "🧠 Starting fresh — no prior memories found");
+    }
     if (event.event === "phase_start") {
       const phase = event.phase as number;
-      await updateProgress({ phase, progress: PHASE_PROGRESS[phase - 1] ?? 0, label: PHASE_LABELS[phase] ?? "" });
+      const label = PHASE_LABELS[phase] ?? "Processing";
+      await updateProgress({ phase, progress: PHASE_PROGRESS[phase - 1] ?? 0, label });
+      const PHASE_AGENT_NAMES: Record<number, string> = {
+        1: "World Architect · Story Architect · Character Designer",
+        2: "Enemy Designer · Boss Designer · Combat Designer · Ability Designer",
+        3: "Quest Designer · Environment Designer · Dungeon Designer · Puzzle Designer",
+        4: "Progression Designer · Economy Designer · Loot Designer · Crafting Designer",
+        5: "Pixel Art Designer · Animation Designer · UI Designer · Audio Composer · Sound Designer",
+        6: "QA Agent · Performance Optimizer · Documentation Agent",
+      };
+      await appendLog(jobId, `▶ Phase ${phase}: ${label}`);
+      await appendLog(jobId, `🤖 Agents active: ${PHASE_AGENT_NAMES[phase] ?? "AI Pipeline"}`);
+    }
+    if (event.event === "phase_model") {
+      const model = event.model as string;
+      await appendLog(jobId, `🔀 Model Router selected: ${model}`);
+    }
+    if (event.event === "asset_generating") {
+      await appendLog(jobId, `🎨 ${String(event.message ?? "Generating assets…")}`);
+    }
+    if (event.event === "asset_generated") {
+      const name = event.name as string | undefined;
+      await appendLog(jobId, `✅ Asset ready: ${name ?? "image"}`);
     }
     if (event.event === "phase_complete") {
       const phase = event.phase as number;
-      await updateProgress({ phase, progress: PHASE_PROGRESS[phase] ?? 100, label: PHASE_LABELS[phase] ?? "" });
+      const label = PHASE_LABELS[phase] ?? "Phase";
+      await updateProgress({ phase, progress: PHASE_PROGRESS[phase] ?? 100, label });
+      await appendLog(jobId, `✔ Phase ${phase} complete — ${label}`);
     }
   });
+  await appendLog(jobId, "🏁 All phases complete. Project packaged and ready.");
 
   return { projectId, completedAt: new Date().toISOString() };
 });

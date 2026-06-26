@@ -32,10 +32,12 @@ import {
   generateTaskGraph,
   type PipelineTask,
 } from "@/constants/generation-pipeline";
+import { AGENT_DEFS } from "@/constants/agents";
+import type { AgentState } from "@/components/AgentNetwork";
 import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
-import { JobStatusCard, type BackgroundJob } from "@/components/JobStatusCard";
+import { GenerationConsole, type LiveJob } from "@/components/GenerationConsole";
 import { ProjectMemoryPanel } from "@/components/ProjectMemoryPanel";
 
 interface GeneratedAsset {
@@ -59,7 +61,7 @@ export default function ProjectDetailScreen() {
 
   const [projectAssets, setProjectAssets] = useState<GeneratedAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(false);
-  const [activeJob, setActiveJob] = useState<BackgroundJob | null>(null);
+  const [activeJob, setActiveJob] = useState<LiveJob | null>(null);
   const [startingJob, setStartingJob] = useState(false);
 
   const project = projects.find((p) => p.id === id);
@@ -94,9 +96,10 @@ export default function ProjectDetailScreen() {
         id: data.jobId,
         type: "generate",
         status: "pending",
-        phase: 0,
+        phase: 1,
         progress: 0,
         label: "Queued…",
+        logs: [],
         projectId: id,
         createdAt: new Date().toISOString(),
       });
@@ -223,6 +226,16 @@ export default function ProjectDetailScreen() {
   const runningTasks = tasks.filter((t) => t.status === "running").length;
   const currentPhase = tasks.find((t) => t.status === "running")?.phase ?? 0;
 
+  const liveAgentStates = useMemo((): AgentState[] => {
+    if (!activeJob) return (project?.agentStates ?? []) as AgentState[];
+    const ph = activeJob.phase;
+    const done = activeJob.status === "completed" || activeJob.progress >= 100;
+    return AGENT_DEFS.map((a) => ({
+      agentId: a.id,
+      status: (done ? "done" : a.phase < ph ? "done" : a.phase === ph ? "active" : "queued") as AgentState["status"],
+    }));
+  }, [activeJob, project?.agentStates]);
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
@@ -343,9 +356,9 @@ export default function ProjectDetailScreen() {
             <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>GENERATION PIPELINE</Text>
             <AIProgressIndicator steps={project.steps} />
 
-            {/* Active background job */}
+            {/* Active background job — live generation console */}
             {activeJob && (
-              <JobStatusCard
+              <GenerationConsole
                 job={activeJob}
                 onJobUpdate={(updated) => setActiveJob(updated)}
                 onCancel={(jobId) => {
@@ -355,7 +368,6 @@ export default function ProjectDetailScreen() {
                   }).catch(() => {});
                   setActiveJob((j) => j ? { ...j, status: "cancelled" } : null);
                 }}
-                poll
               />
             )}
 
@@ -540,7 +552,15 @@ export default function ProjectDetailScreen() {
         {/* ─── AGENTS ─── */}
         {activeTab === "agents" && (
           <View style={styles.tabContent}>
-            <AgentNetwork agentStates={project.agentStates ?? []} />
+            {activeJob && (
+              <View style={[styles.blueprintBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary }]}>
+                <Feather name="zap" size={14} color={colors.primary} />
+                <Text style={[styles.blueprintBannerText, { color: colors.primary }]}>
+                  Live · Phase {activeJob.phase} · {activeJob.progress}% · {activeJob.label}
+                </Text>
+              </View>
+            )}
+            <AgentNetwork agentStates={liveAgentStates} />
           </View>
         )}
 

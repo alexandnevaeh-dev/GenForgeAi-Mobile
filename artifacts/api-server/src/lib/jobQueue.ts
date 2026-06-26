@@ -9,7 +9,7 @@
 
 import { db } from "@workspace/db";
 import { jobs } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { logger } from "./logger";
 import { createNotification } from "./notify";
 
@@ -35,6 +35,23 @@ let running = 0;
 /** Register a handler for a given job type. */
 export function registerHandler(type: string, handler: JobHandler): void {
   handlers.set(type, handler);
+}
+
+/** Append a single log line to the job's `logs` JSON array (best-effort). */
+export async function appendLog(jobId: string, line: string): Promise<void> {
+  try {
+    const ts = new Date().toISOString().slice(11, 19); // HH:MM:SS
+    const entry = `[${ts}] ${line}`;
+    await db
+      .update(jobs)
+      .set({
+        logs: sql`logs || ${JSON.stringify([entry])}::jsonb`,
+        updatedAt: new Date(),
+      })
+      .where(eq(jobs.id, jobId));
+  } catch {
+    // non-fatal
+  }
 }
 
 /** Persist a progress update to the DB (best-effort). */
