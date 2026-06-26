@@ -23,6 +23,7 @@ import { GenLogicPanel } from "@/components/GenLogicPanel";
 import { AssetGenerationPanel } from "@/components/AssetGenerationPanel";
 import { DownloadExportPanel } from "@/components/DownloadExportPanel";
 import { ExportFrameworkPanel } from "@/components/ExportFrameworkPanel";
+import { ExportValidationPanel } from "@/components/ExportValidationPanel";
 import { ProceduralSystemsPanel } from "@/components/ProceduralSystemsPanel";
 import { QualityGates } from "@/components/QualityGates";
 import { TaskGraph } from "@/components/TaskGraph";
@@ -532,12 +533,13 @@ export default function ProjectDetailScreen() {
         {/* ─── EXPORT ─── */}
         {activeTab === "export" && (
           <View style={styles.tabContent}>
-            <View style={[styles.blueprintBanner, { backgroundColor: colors.warning + "12", borderColor: colors.warning }]}>
-              <Feather name="upload" size={14} color={colors.warning} />
-              <Text style={[styles.blueprintBannerText, { color: colors.warning }]}>
-                Engine export · Godot · Phaser · Unity · Generic ZIP
+            <View style={[styles.blueprintBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary }]}>
+              <Feather name="upload" size={14} color={colors.primary} />
+              <Text style={[styles.blueprintBannerText, { color: colors.primary }]}>
+                8 engines · Godot · Unity · Unreal · GameMaker · Construct · RPG Maker · Phaser · Generic
               </Text>
             </View>
+            <ExportValidationPanel projectId={project.id} />
             <DownloadExportPanel
               projectId={project.id}
               projectTitle={project.title}
