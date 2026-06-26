@@ -1,15 +1,18 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,6 +20,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
+
+const GENRES = ["RPG","Action","Platformer","Strategy","Puzzle","Horror","Adventure","Simulation","Fighting","Shooter"] as const;
+const ART_STYLES = ["Pixel Art","Low Poly","Realistic","Cartoon","Isometric","Voxel","Anime"] as const;
 
 type ProfileTab = "account" | "subscription" | "security";
 
@@ -89,33 +95,102 @@ function SettingRow({
   );
 }
 
+interface ApiStats {
+  totalProjects: number;
+  totalAssets: number;
+  totalGenerations: number;
+  aiCreditsUsed: number;
+  aiCreditsLimit: number;
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, accessToken, patchUser } = useAuth();
   const { projects } = useProjects();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("account");
-  const [notifPush, setNotifPush] = useState(true);
-  const [notifEmail, setNotifEmail] = useState(true);
-  const [notifBuild, setNotifBuild] = useState(true);
+  const [notifPush, setNotifPush] = useState(() => user?.notificationSettings?.["push"] ?? true);
+  const [notifEmail, setNotifEmail] = useState(() => user?.notificationSettings?.["email"] ?? true);
+  const [notifBuild, setNotifBuild] = useState(() => user?.notificationSettings?.["buildComplete"] ?? true);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
+
+  // Edit profile modal
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState(user?.displayName ?? "");
+  const [editBio, setEditBio] = useState(user?.bio ?? "");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  // Generation preferences
+  const [prefGenre, setPrefGenre] = useState<string>(user?.preferences?.defaultGenre ?? "");
+  const [prefArtStyle, setPrefArtStyle] = useState<string>(user?.preferences?.defaultArtStyle ?? "");
+
+  // Live stats from API
+  const [apiStats, setApiStats] = useState<ApiStats | null>(null);
+
+  const isGuest = user?.role === "guest";
+
+  useEffect(() => {
+    if (!accessToken || isGuest) return;
+    fetch("/api/users/me/stats", { headers: { Authorization: `Bearer ${accessToken}` } })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d: { stats: ApiStats } | null) => { if (d?.stats) setApiStats(d.stats); })
+      .catch(() => {});
+  }, [accessToken, isGuest]);
+
+  const handleNotifToggle = useCallback(
+    (key: "push" | "email" | "buildComplete", value: boolean) => {
+      if (isGuest) return;
+      void patchUser({ notificationSettings: { [key]: value } });
+    },
+    [isGuest, patchUser]
+  );
+
+  const handleSaveProfile = useCallback(async () => {
+    if (!editName.trim()) { setEditError("Display name is required"); return; }
+    setEditSaving(true);
+    setEditError("");
+    const { error } = await patchUser({ displayName: editName.trim(), bio: editBio.trim() });
+    setEditSaving(false);
+    if (error) { setEditError(error); return; }
+    setEditOpen(false);
+  }, [editName, editBio, patchUser]);
+
+  const handleSaveGenrePrefs = useCallback(
+    async (genre: string) => {
+      if (isGuest) return;
+      setPrefGenre(genre);
+      void patchUser({ preferences: { defaultGenre: genre, defaultArtStyle: prefArtStyle } });
+    },
+    [isGuest, patchUser, prefArtStyle]
+  );
+
+  const handleSaveArtStylePrefs = useCallback(
+    async (artStyle: string) => {
+      if (isGuest) return;
+      setPrefArtStyle(artStyle);
+      void patchUser({ preferences: { defaultGenre: prefGenre, defaultArtStyle: artStyle } });
+    },
+    [isGuest, patchUser, prefGenre]
+  );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
-  const isGuest = user?.role === "guest";
   const tier = user?.subscriptionTier ?? "free";
   const tierConfig = TIER_CONFIG[tier as keyof typeof TIER_CONFIG] ?? TIER_CONFIG.free;
 
-  const totalProjects = projects.length;
+  const totalProjects = apiStats?.totalProjects ?? projects.length;
   const completedProjects = projects.filter(
     (p) => p.status === "complete" || p.status === "exported"
   ).length;
+  const totalAssets = apiStats?.totalAssets ?? 0;
+  const totalGenerations = apiStats?.totalGenerations ?? user?.totalGenerations ?? 0;
 
-  const creditsUsed = user?.aiCreditsUsed ?? 0;
-  const creditsLimit = user?.aiCreditsLimit ?? tierConfig.credits;
+  const creditsUsed = apiStats?.aiCreditsUsed ?? user?.aiCreditsUsed ?? 0;
+  const creditsLimit = apiStats?.aiCreditsLimit ?? user?.aiCreditsLimit ?? tierConfig.credits;
   const creditsPct = creditsLimit > 0 ? Math.min(100, (creditsUsed / creditsLimit) * 100) : 100;
 
   const handleLogout = () => {
@@ -133,6 +208,65 @@ export default function ProfileScreen() {
   ];
 
   return (
+    <>
+    {/* ── Edit Profile Modal ── */}
+    <Modal visible={editOpen} transparent animationType="slide" onRequestClose={() => setEditOpen(false)}>
+      <Pressable style={[styles.modalOverlay]} onPress={() => setEditOpen(false)}>
+        <Pressable
+          style={[styles.modalSheet, { backgroundColor: colors.card, borderTopColor: colors.border }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+          <Text style={[styles.modalTitle, { color: colors.foreground }]}>Edit Profile</Text>
+
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Display Name</Text>
+          <TextInput
+            style={[styles.fieldInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+            value={editName}
+            onChangeText={setEditName}
+            placeholder="Your display name"
+            placeholderTextColor={colors.mutedForeground}
+            maxLength={64}
+            autoFocus
+          />
+
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Bio</Text>
+          <TextInput
+            style={[styles.fieldInput, styles.fieldInputMulti, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+            value={editBio}
+            onChangeText={setEditBio}
+            placeholder="A short bio (optional)"
+            placeholderTextColor={colors.mutedForeground}
+            maxLength={280}
+            multiline
+            numberOfLines={3}
+          />
+
+          {editError ? (
+            <Text style={[styles.fieldError, { color: colors.destructive }]}>{editError}</Text>
+          ) : null}
+
+          <View style={styles.modalActions}>
+            <Pressable
+              onPress={() => setEditOpen(false)}
+              style={[styles.modalBtn, { backgroundColor: colors.muted }]}
+            >
+              <Text style={[styles.modalBtnText, { color: colors.foreground }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => void handleSaveProfile()}
+              disabled={editSaving}
+              style={[styles.modalBtn, styles.modalBtnPrimary, { backgroundColor: colors.primary }]}
+            >
+              {editSaving
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={[styles.modalBtnText, { color: "#fff" }]}>Save</Text>}
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+
     <ScrollView
       style={[styles.scroll, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad, paddingBottom: bottomPad }}
@@ -181,8 +315,8 @@ export default function ProfileScreen() {
           {[
             { label: "Projects", value: totalProjects, icon: "folder" },
             { label: "Completed", value: completedProjects, icon: "check-circle" },
-            { label: "AI Runs", value: user?.totalGenerations ?? 0, icon: "cpu" },
-            { label: "Assets", value: user?.totalProjects != null ? user.totalProjects * 80 : 0, icon: "image" },
+            { label: "AI Runs", value: totalGenerations, icon: "cpu" },
+            { label: "Assets", value: totalAssets, icon: "image" },
           ].map((s) => (
             <View key={s.label} style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name={s.icon as any} size={16} color={colors.primary} />
@@ -244,7 +378,7 @@ export default function ProfileScreen() {
           <>
             <Text style={[styles.groupLabel, { color: colors.mutedForeground }]}>PROFILE</Text>
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <SettingRow icon="user" label="Edit Profile" onPress={() => {}} />
+              <SettingRow icon="user" label="Edit Profile" onPress={() => { setEditName(user?.displayName ?? ""); setEditBio(user?.bio ?? ""); setEditOpen(true); }} />
               <SettingRow icon="at-sign" label="Username" value={`@${user?.username ?? "guest"}`} />
               <SettingRow icon="mail" label="Email" value={user?.email ?? "—"} badge={user?.email ? "Verified" : undefined} />
               <SettingRow icon="cloud" label="Cloud Storage" value="2.4 GB used" onPress={() => {}} />
@@ -282,11 +416,78 @@ export default function ProfileScreen() {
               <SettingRow icon="moon" label="Dark Mode" toggle toggled={darkMode} onToggle={setDarkMode} />
             </View>
 
-            <Text style={[styles.groupLabel, { color: colors.mutedForeground }]}>PREFERENCES</Text>
+            <Text style={[styles.groupLabel, { color: colors.mutedForeground }]}>NOTIFICATION PREFERENCES</Text>
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <SettingRow icon="bell" label="Push Notifications" toggle toggled={notifPush} onToggle={setNotifPush} />
-              <SettingRow icon="mail" label="Email Notifications" toggle toggled={notifEmail} onToggle={setNotifEmail} />
-              <SettingRow icon="package" label="Build Completion Alerts" toggle toggled={notifBuild} onToggle={setNotifBuild} />
+              <SettingRow
+                icon="bell"
+                label="Job Completion Alerts"
+                toggle
+                toggled={notifPush}
+                onToggle={(v) => { setNotifPush(v); handleNotifToggle("push", v); }}
+              />
+              <SettingRow
+                icon="mail"
+                label="Email Notifications"
+                toggle
+                toggled={notifEmail}
+                onToggle={(v) => { setNotifEmail(v); handleNotifToggle("email", v); }}
+              />
+              <SettingRow
+                icon="package"
+                label="Build Completion Alerts"
+                toggle
+                toggled={notifBuild}
+                onToggle={(v) => { setNotifBuild(v); handleNotifToggle("buildComplete", v); }}
+              />
+            </View>
+
+            <Text style={[styles.groupLabel, { color: colors.mutedForeground }]}>GENERATION DEFAULTS</Text>
+            <View style={[styles.prefCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.prefLabel, { color: colors.mutedForeground }]}>Default Genre</Text>
+              <View style={styles.prefChips}>
+                {GENRES.map((g) => (
+                  <Pressable
+                    key={g}
+                    onPress={() => void handleSaveGenrePrefs(g)}
+                    style={[
+                      styles.prefChip,
+                      {
+                        backgroundColor: prefGenre === g ? colors.primary : colors.muted,
+                        borderColor: prefGenre === g ? colors.primary : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.prefChipText, { color: prefGenre === g ? "#fff" : colors.foreground }]}>
+                      {g}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={[styles.prefLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Default Art Style</Text>
+              <View style={styles.prefChips}>
+                {ART_STYLES.map((a) => (
+                  <Pressable
+                    key={a}
+                    onPress={() => void handleSaveArtStylePrefs(a)}
+                    style={[
+                      styles.prefChip,
+                      {
+                        backgroundColor: prefArtStyle === a ? colors.secondary : colors.muted,
+                        borderColor: prefArtStyle === a ? colors.secondary : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.prefChipText, { color: prefArtStyle === a ? "#fff" : colors.foreground }]}>
+                      {a}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {!isGuest && (prefGenre || prefArtStyle) && (
+                <Text style={[styles.prefSaved, { color: colors.success }]}>
+                  Saved — new games will start with these defaults
+                </Text>
+              )}
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -432,6 +633,7 @@ export default function ProfileScreen() {
         <Text style={[styles.version, { color: colors.mutedForeground }]}>GenForgeAI Mobile v1.0.0 · {tier} plan</Text>
       </View>
     </ScrollView>
+    </>
   );
 }
 
@@ -554,4 +756,38 @@ const styles = StyleSheet.create({
   securityDot: { width: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   securityItemLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
   version: { textAlign: "center", fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 8 },
+  // Preferences
+  prefCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 6 },
+  prefLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, marginBottom: 2 },
+  prefChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  prefChip: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
+  prefChipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  prefSaved: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 6 },
+  // Edit profile modal
+  modalOverlay: { flex: 1, backgroundColor: "#00000070", justifyContent: "flex-end" },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    padding: 24,
+    paddingBottom: 40,
+    gap: 8,
+  },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 8 },
+  modalTitle: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 8 },
+  fieldLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", letterSpacing: 0.6 },
+  fieldInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+  },
+  fieldInputMulti: { minHeight: 80, textAlignVertical: "top" },
+  fieldError: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 8 },
+  modalBtn: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 13, borderRadius: 12 },
+  modalBtnPrimary: {},
+  modalBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
 });

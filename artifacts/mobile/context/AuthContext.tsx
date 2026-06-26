@@ -7,18 +7,29 @@ import React, {
   useState,
 } from "react";
 
+export interface UserPreferences {
+  defaultGenre?: string;
+  defaultArtStyle?: string;
+  defaultDifficulty?: string;
+  [key: string]: unknown;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
   username: string;
   displayName: string;
+  bio?: string;
   avatar?: string;
   role: string;
   subscriptionTier: string;
   aiCreditsUsed?: number;
   aiCreditsLimit?: number;
   totalProjects?: number;
+  totalAssets?: number;
   totalGenerations?: number;
+  preferences?: UserPreferences;
+  notificationSettings?: Record<string, boolean>;
 }
 
 interface AuthState {
@@ -39,6 +50,12 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   updateUser: (updates: Partial<AuthUser>) => void;
+  patchUser: (updates: {
+    displayName?: string;
+    bio?: string;
+    preferences?: Record<string, unknown>;
+    notificationSettings?: Record<string, boolean>;
+  }) => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -201,9 +218,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const patchUser = useCallback(
+    async (updates: {
+      displayName?: string;
+      bio?: string;
+      preferences?: Record<string, unknown>;
+      notificationSettings?: Record<string, boolean>;
+    }): Promise<{ error?: string }> => {
+      if (!state.accessToken) return { error: "Not authenticated" };
+      try {
+        const data = await apiFetch("/users/me", {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${state.accessToken}` },
+          body: JSON.stringify(updates),
+        });
+        const merged = { ...state.user, ...data.user } as AuthUser;
+        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(merged));
+        setState((s) => ({ ...s, user: merged }));
+        return {};
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Update failed" };
+      }
+    },
+    [state.accessToken, state.user]
+  );
+
   return (
     <AuthContext.Provider
-      value={{ ...state, login, register, logout, continueAsGuest, updateUser }}
+      value={{ ...state, login, register, logout, continueAsGuest, updateUser, patchUser }}
     >
       {children}
     </AuthContext.Provider>

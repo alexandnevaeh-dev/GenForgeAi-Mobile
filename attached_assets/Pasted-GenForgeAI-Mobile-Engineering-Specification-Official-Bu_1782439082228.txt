@@ -1,0 +1,356 @@
+GenForgeAI Mobile Engineering Specification
+
+Official Build v1.0
+
+Part 1 — Foundation & System Architecture
+
+
+---
+
+Vision
+
+GenForgeAI is an AI-powered mobile game development studio that enables anyone to create complete, playable games using natural language. A user can describe a game idea, and GenForgeAI coordinates specialized AI systems to generate design documents, artwork, code, audio, levels, UI, testing, optimization, and export packages.
+
+The long-term objective is to make GenForgeAI the "GitHub + Unity + ChatGPT" for AI-native game creation.
+
+
+---
+
+Core Principles
+
+Mobile-first experience
+
+Professional-quality output
+
+Modular architecture
+
+Real AI orchestration
+
+Free-model routing with fallback
+
+Offline draft support
+
+Cloud synchronization
+
+Incremental generation
+
+Human-editable outputs
+
+Production-ready exports
+
+
+
+---
+
+Primary Technology Stack
+
+Frontend
+
+React Native (Expo)
+
+TypeScript
+
+React Navigation
+
+React Query
+
+Zustand
+
+Expo Router
+
+NativeWind (Tailwind)
+
+
+Backend
+
+Node.js
+
+NestJS
+
+TypeScript
+
+PostgreSQL
+
+Redis
+
+Prisma ORM
+
+
+Storage
+
+Supabase
+
+Cloudflare R2
+
+Local SQLite cache
+
+
+AI Layer
+
+AI Router Service
+
+Prompt Orchestrator
+
+Agent Coordinator
+
+Generation Queue
+
+Memory Service
+
+
+Game Export
+
+Godot
+
+Unity
+
+Unreal (future)
+
+HTML5
+
+Android APK
+
+Windows
+
+
+
+---
+
+Repository Structure
+
+genforgeai/
+
+apps/
+   mobile/
+   admin/
+   landing/
+
+backend/
+   api/
+   ai-router/
+   auth/
+   export-service/
+   billing/
+   notifications/
+
+packages/
+   ui/
+   agents/
+   prompts/
+   sdk/
+   shared/
+
+database/
+   prisma/
+   migrations/
+
+assets/
+   icons/
+   fonts/
+   placeholders/
+
+docs/
+
+scripts/
+
+tests/
+
+
+---
+
+Core AI Pipeline
+
+The generation flow is:
+
+1. User enters prompt.
+
+
+2. AI analyzes request.
+
+
+3. Game Director creates master plan.
+
+
+4. Tasks are divided among specialist AI agents.
+
+
+5. Agents generate assets in parallel.
+
+
+6. Validator checks quality.
+
+
+7. Optimizer improves output.
+
+
+8. Export Builder creates playable project.
+
+
+9. User previews and edits.
+
+
+10. Final export is produced.
+
+
+
+
+---
+
+Major Systems
+
+Authentication
+
+Projects
+
+AI Chat
+
+Game Generator
+
+Asset Studio
+
+Audio Studio
+
+Animation Studio
+
+Testing Lab
+
+Build Center
+
+Export Center
+
+Marketplace
+
+Community
+
+Notifications
+
+Billing
+
+Settings
+
+Analytics
+
+Admin Dashboard
+
+
+
+---
+
+Home Screen
+
+The dashboard includes:
+
+Continue Project
+
+Create New Game
+
+AI Assistant
+
+Recent Projects
+
+Templates
+
+Featured Assets
+
+Community Feed
+
+Notifications
+
+Daily Tips
+
+Quick Actions
+
+
+
+---
+
+Bottom Navigation
+
+Home
+
+Projects
+
+Generate
+
+Community
+
+Profile
+
+
+
+---
+
+AI Agents (Initial Set)
+
+Master Game Director
+
+Story Writer
+
+Dialogue Writer
+
+Quest Designer
+
+Character Designer
+
+Enemy Designer
+
+Level Designer
+
+Combat Designer
+
+Economy Designer
+
+Pixel Artist
+
+Concept Artist
+
+UI Designer
+
+Animator
+
+Music Composer
+
+Sound Designer
+
+Programmer
+
+Bug Hunter
+
+Optimizer
+
+Performance Analyzer
+
+Documentation Writer
+
+Export Manager
+
+Build Validator
+
+Project Manager
+
+
+Each agent has a defined role, specialized prompts, and communicates through the Agent Coordinator.
+
+
+---
+
+Milestone 1 Goal
+
+By the end of the first milestone, users should be able to:
+
+Create an account
+
+Start a project
+
+Describe a game idea
+
+Generate a complete Game Design Document
+
+Save projects
+
+Edit generated content
+
+Prepare the project for asset generation
+
+
+This establishes the foundation for the rest of GenForgeAI. In Part 2, we'll build the complete mobile UI, navigation flow, authentication, database schema, and project management system.

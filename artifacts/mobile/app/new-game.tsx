@@ -137,12 +137,16 @@ export default function NewGameScreen() {
   const { accessToken, user } = useAuth();
   const isGuest = !accessToken || user?.id === "guest";
 
-  // Wizard state
+  // Wizard state — seeded from user's saved generation preferences
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<GenerationMode>("autonomous");
   const [prompt, setPrompt] = useState("");
-  const [genre, setGenre] = useState<Genre | null>(null);
-  const [artStyle, setArtStyle] = useState<ArtStyle | null>(null);
+  const [genre, setGenre] = useState<Genre | null>(
+    (GENRES.includes(user?.preferences?.defaultGenre as Genre) ? user?.preferences?.defaultGenre as Genre : null)
+  );
+  const [artStyle, setArtStyle] = useState<ArtStyle | null>(
+    (ART_STYLES.includes(user?.preferences?.defaultArtStyle as ArtStyle) ? user?.preferences?.defaultArtStyle as ArtStyle : null)
+  );
 
   // Advanced params
   const [platforms, setPlatforms] = useState<string[]>(["PC", "Web"]);
