@@ -29,6 +29,11 @@ import { QualityGates } from "@/components/QualityGates";
 import { QADashboard } from "@/components/QADashboard";
 import { PlaytestPanel } from "@/components/PlaytestPanel";
 import { BalanceTunerPanel } from "@/components/BalanceTunerPanel";
+import { PublishingHub } from "@/components/PublishingHub";
+import { StoreListingPanel } from "@/components/StoreListingPanel";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { LiveOpsPanel } from "@/components/LiveOpsPanel";
+import { MonetizationPanel } from "@/components/MonetizationPanel";
 import { TaskGraph } from "@/components/TaskGraph";
 import {
   generateAnalysis,
@@ -53,7 +58,8 @@ interface GeneratedAsset {
   createdAt: string;
 }
 
-type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "export" | "quality" | "agents" | "memory" | "chat";
+type Tab = "overview" | "blueprint" | "tasks" | "systems" | "assets" | "export" | "quality" | "agents" | "memory" | "chat" | "publish";
+type PublishPlatform = "google-play" | "app-store" | "steam" | "itch-io" | "epic" | "direct";
 
 export default function ProjectDetailScreen() {
   const colors = useColors();
@@ -63,6 +69,7 @@ export default function ProjectDetailScreen() {
   const { accessToken, user } = useAuth();
   const isGuest = !accessToken || user?.id === "guest";
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [publishPlatform, setPublishPlatform] = useState<PublishPlatform | null>(null);
 
   const [projectAssets, setProjectAssets] = useState<GeneratedAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(false);
@@ -224,7 +231,8 @@ export default function ProjectDetailScreen() {
     { key: "export", label: "Export", icon: "upload" },
     { key: "quality", label: "Quality", icon: "shield" },
     { key: "agents", label: "Agents", icon: "cpu" },
-    { key: "memory", label: "Memory", icon: "database" },
+    { key: "memory",  label: "Memory",  icon: "database" },
+    { key: "publish", label: "Publish", icon: "send" },
   ];
 
   const completedTasks = tasks.filter((t) => t.status === "completed").length;
@@ -593,6 +601,33 @@ export default function ProjectDetailScreen() {
               </Text>
             </View>
             <ProjectMemoryPanel projectId={project.id} />
+          </View>
+        )}
+
+        {/* ─── PUBLISH ─── */}
+        {activeTab === "publish" && (
+          <View style={styles.tabContent}>
+            <View style={[styles.blueprintBanner, { backgroundColor: "#22C55E12", borderColor: "#22C55E" }]}>
+              <Feather name="send" size={14} color="#22C55E" />
+              <Text style={[styles.blueprintBannerText, { color: "#22C55E" }]}>
+                6 storefronts · Store listing · Analytics · LiveOps · Monetization
+              </Text>
+            </View>
+            {publishPlatform ? (
+              <StoreListingPanel
+                projectId={project.id}
+                platform={publishPlatform}
+                onBack={() => setPublishPlatform(null)}
+              />
+            ) : (
+              <PublishingHub
+                projectId={project.id}
+                onSelectPlatform={(p) => setPublishPlatform(p)}
+              />
+            )}
+            <AnalyticsDashboard projectId={project.id} />
+            <LiveOpsPanel projectId={project.id} />
+            <MonetizationPanel />
           </View>
         )}
       </ScrollView>
