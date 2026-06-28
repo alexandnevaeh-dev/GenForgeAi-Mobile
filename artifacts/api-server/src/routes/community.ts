@@ -14,7 +14,7 @@ const createPostSchema = z.object({
 });
 
 /* ── GET /api/community/posts ────────────────────────────────── */
-router.get("/api/community/posts", async (req, res) => {
+router.get("/community/posts", async (req, res) => {
   const { type, limit = "20", offset = "0" } = req.query as Record<string, string>;
 
   const rows = await db
@@ -47,7 +47,7 @@ router.get("/api/community/posts", async (req, res) => {
 });
 
 /* ── POST /api/community/posts ───────────────────────────────── */
-router.post("/api/community/posts", requireAuth, async (req, res) => {
+router.post("/community/posts", requireAuth, async (req, res) => {
   const result = createPostSchema.safeParse(req.body);
   if (!result.success) {
     res.status(400).json({ error: "Validation failed", details: result.error.issues });
@@ -71,7 +71,7 @@ router.post("/api/community/posts", requireAuth, async (req, res) => {
 });
 
 /* ── POST /api/community/posts/:id/like ─────────────────────── */
-router.post("/api/community/posts/:id/like", requireAuth, async (req, res) => {
+router.post("/community/posts/:id/like", requireAuth, async (req, res) => {
   const postId = req.params["id"] as string;
   const userId = req.user!.sub;
 
@@ -101,7 +101,7 @@ router.post("/api/community/posts/:id/like", requireAuth, async (req, res) => {
 });
 
 /* ── DELETE /api/community/posts/:id ────────────────────────── */
-router.delete("/api/community/posts/:id", requireAuth, async (req, res) => {
+router.delete("/community/posts/:id", requireAuth, async (req, res) => {
   const postId  = req.params["id"] as string;
   const ownerId = req.user!.sub;
 
