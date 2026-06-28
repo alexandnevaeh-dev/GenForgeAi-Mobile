@@ -175,7 +175,7 @@ export default function ExportCenterScreen() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const topPad    = Platform.OS === "web" ? 67 : insets.top + 16;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 16;
+  const bottomPad = Platform.OS === "web" ? 60 : insets.bottom + 32;
 
   const TABS: { label: string; value: ExportTab; icon: string }[] = [
     { label: "My Projects", value: "projects", icon: "list" },
@@ -250,7 +250,7 @@ export default function ExportCenterScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: bottomPad, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: bottomPad + 16, gap: 12 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >

@@ -285,7 +285,7 @@ export default function MarketplaceScreen() {
   const [using, setUsing] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 24;
+  const bottomPad = Platform.OS === "web" ? 60 : insets.bottom + 40;
 
   const fetchTemplates = useCallback(async (cat?: string, q?: string) => {
     try {

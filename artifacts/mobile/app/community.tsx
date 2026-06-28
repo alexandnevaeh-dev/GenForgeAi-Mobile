@@ -165,7 +165,7 @@ export default function CommunityScreen() {
   const [posting, setPosting]     = useState(false);
 
   const topPad    = Platform.OS === "web" ? 67 : insets.top + 16;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 16;
+  const bottomPad = Platform.OS === "web" ? 60 : insets.bottom + 32;
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -331,7 +331,7 @@ export default function CommunityScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: bottomPad }}
+        contentContainerStyle={{ paddingBottom: bottomPad + 16 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   tab:               { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 11, borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabActive:         {},
   tabLabel:          { fontSize: 12, fontFamily: "Inter_500Medium" },
-  feedContent:       { paddingHorizontal: 16, paddingTop: 14, gap: 12 },
+  feedContent:       { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, gap: 12 },
   liveBanner:        { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, borderWidth: 1 },
   liveDot:           { width: 8, height: 8, borderRadius: 4 },
   liveText:          { fontSize: 13, fontFamily: "Inter_500Medium" },

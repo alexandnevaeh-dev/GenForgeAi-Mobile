@@ -74,7 +74,7 @@ export default function ChatScreen() {
   const [showTimeline, setShowTimeline] = useState(false);
   const flatRef = useRef<FlatList>(null);
 
-  const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
+  const bottomInset = Platform.OS === "web" ? 84 : insets.bottom + 84;
 
   const handleSend = async () => {
     const text = input.trim();
@@ -133,7 +133,7 @@ export default function ChatScreen() {
           inverted
           keyExtractor={(m) => m.id}
           renderItem={({ item }) => <ChatBubble message={item} />}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 8 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 12 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"

@@ -150,7 +150,7 @@ export default function ProjectDetailScreen() {
   }, [activeTab, fetchProjectAssets]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 12;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 16;
+  const bottomPad = Platform.OS === "web" ? 60 : insets.bottom + 32;
 
   // Derive blueprint & task graph from project data
   const { blueprint, tasks } = useMemo(() => {
