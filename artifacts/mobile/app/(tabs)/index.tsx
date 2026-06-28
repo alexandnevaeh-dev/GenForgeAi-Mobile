@@ -1,28 +1,85 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Drawer } from "@/components/Drawer";
 import { NotificationPanel } from "@/components/NotificationPanel";
-import { ProjectCard } from "@/components/ProjectCard";
-import { QuickAction } from "@/components/QuickAction";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { BlueprintProjectCard } from "@/components/home/BlueprintProjectCard";
+import { ForgeAIConsole } from "@/components/home/ForgeAIConsole";
+import { ForgeConsoleBanner } from "@/components/home/ForgeConsoleBanner";
+import { ForgeHeader } from "@/components/home/ForgeHeader";
+import { ForgeQuickAction } from "@/components/home/ForgeQuickAction";
+import { GuildNoticeBoard } from "@/components/home/GuildNoticeBoard";
+import { MagicScrollTip } from "@/components/home/MagicScrollTip";
+import { ScrollTemplateCard } from "@/components/home/ScrollTemplateCard";
 import { useNotifications } from "@/context/NotificationsContext";
 import { useProjects } from "@/context/ProjectsContext";
-import { useColors } from "@/hooks/useColors";
 
 type HomeTpl = { id: string; title: string; genre: string; priceCents: number; badge?: string };
 
+const QUICK_ACTIONS = [
+  { icon: "plus" as const,         label: "Create Game", route: "/new-game",           gradientColors: ["#0A2050", "#1A4090", "#3B8FFF"] as [string,string,string], glowColor: "#3B8FFF", floatDelay: 0 },
+  { icon: "message-square" as const, label: "AI Studio",   route: "/(tabs)/chat",       gradientColors: ["#1E0A40", "#4A1A8A", "#9B4BFF"] as [string,string,string], glowColor: "#9B4BFF", floatDelay: 220 },
+  { icon: "folder" as const,        label: "Projects",    route: "/(tabs)/projects",   gradientColors: ["#0A1A40", "#163070", "#1E5AB0"] as [string,string,string], glowColor: "#1E6AFF", floatDelay: 440 },
+  { icon: "image" as const,         label: "Assets",      route: "/(tabs)/assets",     gradientColors: ["#061828", "#0E3850", "#1A6890"] as [string,string,string], glowColor: "#1A88AA", floatDelay: 660 },
+  { icon: "shopping-bag" as const,  label: "Marketplace", route: "/marketplace",       gradientColors: ["#281408", "#6A3810", "#C07020"] as [string,string,string], glowColor: "#C07020", floatDelay: 880 },
+  { icon: "upload" as const,        label: "Export",      route: "/export-center",     gradientColors: ["#06200E", "#124530", "#1A8050"] as [string,string,string], glowColor: "#1A9060", floatDelay: 1100 },
+];
+
+function ForgeSectionLabel({ text, onAction, actionLabel }: { text: string; onAction?: () => void; actionLabel?: string }) {
+  return (
+    <View style={s.sectionRow}>
+      <View style={s.sectionDiamond} />
+      <Text style={s.sectionTitle}>{text}</Text>
+      {onAction && actionLabel && (
+        <Pressable onPress={onAction} style={s.sectionAction}>
+          <Text style={s.sectionActionText}>{actionLabel}</Text>
+          <Feather name="chevron-right" size={11} color="#5BA8FF" />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+function SkeletonBlueprint() {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: false }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: false }),
+      ])
+    ).start();
+  }, [shimmer]);
+  const bg = shimmer.interpolate({ inputRange: [0, 1], outputRange: ["#0E0C1A", "#161430"] });
+  return <Animated.View style={[s.skeleton, { backgroundColor: bg }]} />;
+}
+
+function EmptyBlueprint() {
+  return (
+    <View style={s.emptyWrap}>
+      <LinearGradient colors={["#0A0E1C", "#0C1020"]} style={StyleSheet.absoluteFill} />
+      <View style={s.emptyBorder} />
+      <Feather name="folder" size={32} color="#2A3A5A" />
+      <Text style={s.emptyTitle}>No blueprints yet</Text>
+      <Text style={s.emptyBody}>Forge your first game to see it here.</Text>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { projects, isLoading } = useProjects();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -37,7 +94,7 @@ export default function HomeScreen() {
       const data = (await res.json()) as { templates: HomeTpl[] };
       setTrendingTemplates(data.templates.slice(0, 4));
     } catch {
-      // non-fatal, keep empty
+      // non-fatal
     }
   }, []);
 
@@ -52,299 +109,230 @@ export default function HomeScreen() {
   const recentProjects = projects.slice(0, 3);
 
   return (
-    <>
+    <View style={s.root}>
+      {/* Layered animated background */}
+      <AnimatedBackground />
+
+      {/* Top gradient veil — blends content with background */}
+      <LinearGradient
+        colors={["rgba(11,9,20,0.92)", "rgba(11,9,20,0.6)", "rgba(11,9,20,0)"]}
+        style={[s.topVeil, { height: topPad + 60 }]}
+        pointerEvents="none"
+      />
+
       <Drawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <NotificationPanel visible={notifOpen} onClose={() => setNotifOpen(false)} />
 
       <ScrollView
-        style={[styles.scroll, { backgroundColor: colors.background }]}
+        style={s.scroll}
         contentContainerStyle={{ paddingTop: topPad, paddingBottom: bottomPad }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.inner}>
+        <View style={s.inner}>
           {/* Header */}
-          <View style={styles.headerRow}>
-            <Pressable
-              onPress={() => setDrawerOpen(true)}
-              style={[styles.menuBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <Feather name="menu" size={20} color={colors.foreground} />
-            </Pressable>
-            <Text style={[styles.title, { color: colors.foreground }]}>
-              GenForge
-              <Text style={{ color: colors.primary }}>AI</Text>
-            </Text>
-            <Pressable
-              onPress={() => setNotifOpen(true)}
-              style={[styles.notifBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <Feather name="bell" size={20} color={colors.foreground} />
-              {unreadCount > 0 && (
-                <View style={[styles.notifBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.notifBadgeText}>
-                    {unreadCount > 9 ? "9+" : String(unreadCount)}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-          </View>
+          <ForgeHeader
+            onMenuPress={() => setDrawerOpen(true)}
+            onBellPress={() => setNotifOpen(true)}
+            unreadCount={unreadCount}
+          />
 
-          {/* Active Project Banner */}
+          {/* Active Project — Forge Console Banner */}
           {activeProject && (
-            <Pressable
+            <ForgeConsoleBanner
+              title={activeProject.title}
+              progress={activeProject.progress}
               onPress={() => router.push(`/project/${activeProject.id}`)}
-              style={[styles.activeBanner, { backgroundColor: colors.card, borderColor: colors.primary }]}
-            >
-              <View style={styles.activeBannerTop}>
-                <View style={[styles.liveChip, { backgroundColor: colors.primary }]}>
-                  <View style={styles.liveDot} />
-                  <Text style={styles.liveText}>GENERATING</Text>
-                </View>
-                <Text style={[styles.activeBannerTitle, { color: colors.foreground }]} numberOfLines={1}>
-                  {activeProject.title}
-                </Text>
-              </View>
-              <View style={[styles.progressBg, { backgroundColor: colors.muted }]}>
-                <View style={[styles.progressFill, {
-                  backgroundColor: colors.primary,
-                  width: `${activeProject.progress}%` as any,
-                }]} />
-              </View>
-              <View style={styles.bannerFooter}>
-                <Text style={[styles.progressPct, { color: colors.primary }]}>
-                  {activeProject.progress}% complete
-                </Text>
-                <Text style={[styles.bannerTap, { color: colors.mutedForeground }]}>
-                  View details →
-                </Text>
-              </View>
-            </Pressable>
+            />
           )}
 
-          {/* Quick Actions */}
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>QUICK ACTIONS</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickRow}>
-            <QuickAction icon="plus" label="Create Game" accent onPress={() => router.push("/new-game")} />
-            <QuickAction icon="message-square" label="AI Studio" onPress={() => router.push("/(tabs)/chat")} />
-            <QuickAction icon="folder" label="Projects" onPress={() => router.push("/(tabs)/projects")} />
-            <QuickAction icon="image" label="Assets" onPress={() => router.push("/(tabs)/assets")} />
-            <QuickAction icon="shopping-bag" label="Marketplace" onPress={() => router.push("/marketplace")} />
-            <QuickAction icon="upload" label="Export" onPress={() => router.push("/export-center")} />
-          </ScrollView>
-
-          {/* AI Activity */}
-          <View style={[styles.aiBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.aiBoxHeader}>
-              <Feather name="cpu" size={16} color={colors.primary} />
-              <Text style={[styles.aiBoxTitle, { color: colors.foreground }]}>AI Activity</Text>
-              <View style={[styles.onlineDot, { backgroundColor: colors.success }]} />
-              <Text style={[styles.onlineText, { color: colors.success }]}>23 agents active</Text>
-            </View>
-            {[
-              "World-building agent completed fantasy map",
-              "Story agent generated 47 NPC dialogues",
-              "Pixel Art agent rendered 320 sprite assets",
-            ].map((item, i) => (
-              <View key={i} style={styles.activityRow}>
-                <View style={[styles.actDot, { backgroundColor: colors.success }]} />
-                <Text style={[styles.actText, { color: colors.mutedForeground }]}>{item}</Text>
-              </View>
+          {/* Quick Actions — Enchanted Crystals */}
+          <ForgeSectionLabel text="QUICK ACTIONS" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={s.quickRow}
+            contentContainerStyle={s.quickContent}
+          >
+            {QUICK_ACTIONS.map((qa) => (
+              <ForgeQuickAction
+                key={qa.label}
+                icon={qa.icon}
+                label={qa.label}
+                gradientColors={qa.gradientColors}
+                glowColor={qa.glowColor}
+                floatDelay={qa.floatDelay}
+                onPress={() => router.push(qa.route as any)}
+              />
             ))}
-          </View>
-
-          {/* Trending Templates */}
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>TRENDING TEMPLATES</Text>
-            <Text style={[styles.seeAll, { color: colors.primary }]} onPress={() => router.push("/marketplace")}>
-              Browse all
-            </Text>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateRow}>
-            {trendingTemplates.map((t) => {
-              const badge = t.badge ?? (t.priceCents === 0 ? "FREE" : `$${(t.priceCents / 100).toFixed(2)}`);
-              return (
-                <Pressable
-                  key={t.id}
-                  onPress={() => router.push("/marketplace")}
-                  style={[styles.templateCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                >
-                  <View style={[styles.templateIcon, { backgroundColor: colors.muted }]}>
-                    <Feather name="layout" size={22} color={colors.primary} />
-                  </View>
-                  <Text style={[styles.templateName, { color: colors.foreground }]} numberOfLines={2}>{t.title}</Text>
-                  <View style={styles.templateFooter}>
-                    <Text style={[styles.templateGenre, { color: colors.mutedForeground }]}>{t.genre}</Text>
-                    <Text style={[styles.templateBadge, { color: badge === "FREE" ? colors.success : colors.foreground }]}>
-                      {badge}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
           </ScrollView>
 
-          {/* Recent Projects */}
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>RECENT PROJECTS</Text>
-            <Text style={[styles.seeAll, { color: colors.primary }]} onPress={() => router.push("/(tabs)/projects")}>
-              See all
-            </Text>
-          </View>
-          {isLoading ? (
-            <View style={[styles.skeleton, { backgroundColor: colors.card }]} />
-          ) : recentProjects.length === 0 ? (
-            <View style={[styles.emptyBox, { borderColor: colors.border }]}>
-              <Feather name="folder" size={32} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                No projects yet. Create your first game.
-              </Text>
-            </View>
+          {/* AI Activity — Control Console */}
+          <ForgeAIConsole />
+
+          {/* Trending Templates — Magic Scrolls */}
+          <ForgeSectionLabel
+            text="TRENDING TEMPLATES"
+            onAction={() => router.push("/marketplace")}
+            actionLabel="Browse all"
+          />
+          {trendingTemplates.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={s.tplRow}
+              contentContainerStyle={s.tplContent}
+            >
+              {trendingTemplates.map((t) => {
+                const badge = t.badge ?? (t.priceCents === 0 ? "FREE" : `$${(t.priceCents / 100).toFixed(2)}`);
+                return <ScrollTemplateCard key={t.id} title={t.title} genre={t.genre} badge={badge} />;
+              })}
+            </ScrollView>
           ) : (
-            recentProjects.map((p) => <ProjectCard key={p.id} project={p} />)
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={s.tplRow}
+              contentContainerStyle={s.tplContent}
+            >
+              {[
+                { id: "1", title: "Metroidvania Starter", genre: "Platformer", priceCents: 0 },
+                { id: "2", title: "Cozy Farm Sim", genre: "Simulation", priceCents: 0 },
+                { id: "3", title: "Match-3 Puzzle Kit", genre: "Puzzle", priceCents: 999 },
+                { id: "4", title: "Dark Fantasy RPG", genre: "RPG", priceCents: 0 },
+              ].map((t) => (
+                <ScrollTemplateCard
+                  key={t.id}
+                  title={t.title}
+                  genre={t.genre}
+                  badge={t.priceCents === 0 ? "FREE" : `$${(t.priceCents / 100).toFixed(2)}`}
+                />
+              ))}
+            </ScrollView>
           )}
 
-          {/* Community Highlight */}
-          <View style={[styles.communityBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.communityHeader}>
-              <Feather name="users" size={15} color={colors.secondary} />
-              <Text style={[styles.communityTitle, { color: colors.foreground }]}>Community Highlights</Text>
-              <Text style={[styles.seeAll, { color: colors.primary }]} onPress={() => router.push("/community")}>
-                View all
-              </Text>
-            </View>
-            <Text style={[styles.communityText, { color: colors.mutedForeground }]}>
-              2,341 developers are building games right now. "Dark Fantasy Starter" is trending this week.
-            </Text>
-          </View>
+          {/* Recent Projects — Blueprint Tables */}
+          <ForgeSectionLabel
+            text="RECENT BLUEPRINTS"
+            onAction={() => router.push("/(tabs)/projects")}
+            actionLabel="See all"
+          />
+          {isLoading ? (
+            <SkeletonBlueprint />
+          ) : recentProjects.length === 0 ? (
+            <EmptyBlueprint />
+          ) : (
+            recentProjects.map((p) => <BlueprintProjectCard key={p.id} project={p} />)
+          )}
 
-          {/* Tip */}
-          <View style={[styles.tip, { backgroundColor: colors.muted }]}>
-            <Feather name="zap" size={14} color={colors.accent} />
-            <Text style={[styles.tipText, { color: colors.mutedForeground }]}>
-              Tip: Describe your game in one sentence. The Master Game Director handles the rest.
-            </Text>
-          </View>
+          {/* Community — Guild Notice Board */}
+          <GuildNoticeBoard />
+
+          {/* Tip — Magic Scroll */}
+          <MagicScrollTip />
         </View>
       </ScrollView>
-    </>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  inner: { paddingHorizontal: 20, gap: 20 },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+const s = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#0B0914",
   },
-  menuBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
-  notifBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notifBadge: {
+  topVeil: {
     position: "absolute",
-    top: 6,
-    right: 6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 3,
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0,
   },
-  notifBadgeText: {
-    fontSize: 9,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
+  scroll: {
+    flex: 1,
+    backgroundColor: "transparent",
   },
-  activeBanner: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 16,
-    gap: 10,
+  inner: {
+    paddingHorizontal: 20,
+    gap: 20,
   },
-  activeBannerTop: { gap: 6 },
-  liveChip: {
+  sectionRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#fff" },
-  liveText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.8 },
-  activeBannerTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
-  progressBg: { height: 4, borderRadius: 2, overflow: "hidden" },
-  progressFill: { height: 4, borderRadius: 2 },
-  bannerFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  progressPct: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  bannerTap: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  quickRow: { marginHorizontal: -20, paddingHorizontal: 20 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  sectionTitle: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 1.2 },
-  seeAll: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  aiBox: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 10 },
-  aiBoxHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 },
-  aiBoxTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1 },
-  onlineDot: { width: 6, height: 6, borderRadius: 3 },
-  onlineText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  activityRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  actDot: { width: 6, height: 6, borderRadius: 3 },
-  actText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
-  templateRow: { marginHorizontal: -20, paddingHorizontal: 20 },
-  templateCard: {
-    width: 130,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
     gap: 8,
-    marginRight: 10,
   },
-  templateIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  sectionDiamond: {
+    width: 7,
+    height: 7,
+    backgroundColor: "#3B8FFF",
+    transform: [{ rotate: "45deg" }],
+    shadowColor: "#3B8FFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionTitle: {
+    flex: 1,
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: "#4A4A6A",
+    letterSpacing: 1.4,
+  },
+  sectionAction: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 2,
   },
-  templateName: { fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 18 },
-  templateFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  templateGenre: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  templateBadge: { fontSize: 11, fontFamily: "Inter_700Bold" },
-  skeleton: { height: 100, borderRadius: 16 },
-  emptyBox: {
+  sectionActionText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "#5BA8FF",
+  },
+  quickRow: {
+    marginHorizontal: -20,
+  },
+  quickContent: {
+    paddingHorizontal: 20,
+    gap: 10,
+    paddingBottom: 8,
+  },
+  tplRow: {
+    marginHorizontal: -20,
+  },
+  tplContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 4,
+  },
+  skeleton: {
+    height: 110,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#1E1E40",
+  },
+  emptyWrap: {
+    borderRadius: 16,
+    overflow: "hidden",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 36,
+    paddingHorizontal: 24,
+  },
+  emptyBorder: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 16,
     borderWidth: 1,
     borderStyle: "dashed",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 32,
+    borderColor: "#1E2E4A",
   },
-  emptyText: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", paddingHorizontal: 32 },
-  communityBox: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
-  communityHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  communityTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1 },
-  communityText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  tip: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, padding: 12, marginBottom: 8 },
-  tipText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  emptyTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: "#2A3A5A",
+  },
+  emptyBody: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "#1E2840",
+    textAlign: "center",
+  },
 });
