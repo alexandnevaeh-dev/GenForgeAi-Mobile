@@ -41,3 +41,9 @@ id = "5-TsaGdRFFOHk_bUbtnOz"
 uri = "file://FEATURES.md"
 type = "text"
 title = "FEATURES.md"
+
+[[outputs]]
+id = "Pdoe42N4B36eJVaK7-swa"
+uri = "file://exports/genforgeai-ui-layout.md"
+type = "text"
+title = "GenForgeAI — Complete UI Layout Document"
