@@ -1,0 +1,1 @@
+# Lottie / RIVE animation files.

@@ -1,0 +1,369 @@
+GenForgeAI Mobile UI Overhaul – Phase 1
+
+Global Metroidvania/Fantasy Theme Foundation
+
+Objective
+
+Redesign the entire GenForgeAI Mobile application into a premium, animated 2D Metroidvania-inspired experience while preserving 100% of the existing functionality, navigation, providers, routing, API calls, state management, and business logic.
+
+Do not remove or rename any routes, components, contexts, hooks, API endpoints, providers, or navigation structure.
+
+---
+
+Visual Direction
+
+The application should feel like entering a magical forge where AI is creating worlds.
+
+Style references:
+
+- Dark Fantasy
+- Metroidvania
+- Hand-painted 2D environments
+- Animated fantasy UI
+- Modern premium mobile UX
+
+Avoid making it look like a traditional productivity application.
+
+---
+
+Global Color Palette
+
+Replace the flat appearance with a richer fantasy palette.
+
+Background
+
+Very dark blue-black
+
+Layered gradients
+
+Subtle texture
+
+Cards
+
+Dark stone
+
+Metal
+
+Rune engraving
+
+Accent Colors
+
+Forge Blue
+
+Magic Purple
+
+Gold highlights
+
+Cyan magical energy
+
+Success
+
+Emerald green
+
+Warnings
+
+Amber
+
+Danger
+
+Crimson
+
+---
+
+Animated Background System
+
+Every screen should support layered backgrounds.
+
+Layer 1
+
+Sky gradient
+
+Layer 2
+
+Castle silhouettes
+
+Layer 3
+
+Trees or architecture
+
+Layer 4
+
+Fog
+
+Layer 5
+
+Particles
+
+Layers move at different speeds creating parallax.
+
+---
+
+Global Particle Engine
+
+Add lightweight GPU-friendly particles.
+
+Possible particles:
+
+Floating embers
+
+Magic sparks
+
+Dust
+
+Fireflies
+
+Leaves
+
+Ash
+
+Snow
+
+Use low particle counts to preserve performance.
+
+Pause animations when app enters background.
+
+---
+
+Navigation Animation
+
+Every navigation transition should be smoother.
+
+Page Push
+
+Fade + slight slide
+
+Back
+
+Reverse transition
+
+Modal
+
+Rise from bottom with easing
+
+Drawer
+
+Spring animation
+
+Notification Panel
+
+Fade + slide
+
+No instant appearance.
+
+---
+
+Card Redesign
+
+Every card becomes a magical panel.
+
+Rounded corners
+
+Soft glow
+
+Thin rune border
+
+Shadow depth
+
+Hover/press animation
+
+Scale to 0.98
+
+Restore smoothly.
+
+---
+
+Buttons
+
+Every button should have
+
+Glow
+
+Press animation
+
+Ripple
+
+Gradient fill
+
+Primary buttons:
+
+Blue magical energy
+
+Secondary:
+
+Purple magic
+
+Danger:
+
+Red rune
+
+Disabled:
+
+Stone appearance
+
+---
+
+Typography
+
+Continue using Inter.
+
+Add hierarchy.
+
+Large Titles
+
+Bold
+
+Subtitles
+
+Semi-bold
+
+Section labels
+
+Uppercase
+
+Slight spacing
+
+---
+
+Icons
+
+Every Feather icon should gain:
+
+Glow
+
+Animated opacity
+
+Press feedback
+
+Notification bell gently pulses when unread notifications exist.
+
+---
+
+Animated Tab Bar
+
+Keep existing six tabs.
+
+Do not change routing.
+
+Instead:
+
+Glass effect
+
+Animated active indicator
+
+Floating appearance
+
+Small glow beneath active tab
+
+Active tab scales slightly.
+
+---
+
+Background Assets
+
+Create folders:
+
+public/images/backgrounds
+
+public/images/ui
+
+public/images/decorations
+
+public/images/icons
+
+public/animations
+
+public/effects
+
+---
+
+Image Loading
+
+Lazy load backgrounds.
+
+Cache images.
+
+Preload frequently used assets.
+
+Fallback gracefully.
+
+---
+
+Performance
+
+Target:
+
+60 FPS
+
+Hardware acceleration
+
+Minimal re-rendering
+
+Memoize animated components
+
+Lazy loading
+
+Reduce overdraw
+
+Optimize BlurView usage
+
+---
+
+Accessibility
+
+Maintain readable contrast.
+
+Respect reduced motion settings.
+
+Large touch targets.
+
+Screen reader compatibility.
+
+---
+
+DO NOT MODIFY
+
+Business logic
+
+Authentication
+
+Contexts
+
+API endpoints
+
+Navigation routes
+
+Project generation pipeline
+
+Chat system
+
+Asset generation
+
+Export pipeline
+
+Database models
+
+Provider hierarchy
+
+Routing structure
+
+State management
+
+---
+
+Deliverables
+
+Implement the new global design system.
+
+Apply it consistently across every existing screen.
+
+Prepare reusable components so later phases can add custom artwork and animations without changing functionality.
+
+When complete, summarize:
+
+- Files modified
+- Components created
+- Assets added
+- Performance optimizations
+- Remaining placeholders awaiting later phases
+
+Do not begin redesigning individual screens yet. Only establish the shared visual foundation.

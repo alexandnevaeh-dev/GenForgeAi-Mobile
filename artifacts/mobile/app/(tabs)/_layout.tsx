@@ -1,13 +1,9 @@
-import { Feather } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
-import { SymbolView } from "expo-symbols";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
-import { useColors } from "@/hooks/useColors";
+import { ForgeTabBar } from "@/components/ui/ForgeTabBar";
 
 function NativeTabLayout() {
   return (
@@ -41,110 +37,17 @@ function NativeTabLayout() {
 }
 
 function ClassicTabLayout() {
-  const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const isIOS = Platform.OS === "ios";
-  const isWeb = Platform.OS === "web";
-
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
-        headerShown: false,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          elevation: 0,
-          height: isWeb ? 84 : undefined,
-        },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={80}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
-          ) : null,
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <ForgeTabBar {...(props as any)} />}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="house" tintColor={color} size={24} />
-            ) : (
-              <Feather name="home" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: "AI Chat",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="bubble.left" tintColor={color} size={24} />
-            ) : (
-              <Feather name="message-square" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="projects"
-        options={{
-          title: "Projects",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="folder" tintColor={color} size={24} />
-            ) : (
-              <Feather name="folder" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="assets"
-        options={{
-          title: "Assets",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="photo.on.rectangle" tintColor={color} size={24} />
-            ) : (
-              <Feather name="image" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="jobs"
-        options={{
-          title: "Jobs",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="gearshape.2" tintColor={color} size={24} />
-            ) : (
-              <Feather name="cpu" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="person.circle" tintColor={color} size={24} />
-            ) : (
-              <Feather name="user" size={22} color={color} />
-            ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="chat" options={{ title: "AI Chat" }} />
+      <Tabs.Screen name="projects" options={{ title: "Projects" }} />
+      <Tabs.Screen name="assets" options={{ title: "Assets" }} />
+      <Tabs.Screen name="jobs" options={{ title: "Jobs" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
 }

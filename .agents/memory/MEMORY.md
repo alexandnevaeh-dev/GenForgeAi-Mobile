@@ -1,3 +1,4 @@
 - [expo-file-system v56 legacy API](expo-filesystem-v56.md) — `downloadAsync`/`cacheDirectory` moved; import from `expo-file-system/legacy`.
 - [Sprite-sheet slice/export geometry](spritesheet-geometry.md) — export atlas rects must mirror the slicer; margin/spacing persisted in metadata so they stay in lockstep.
 - [Assets API client pattern](genforge-assets-pattern.md) — assets use manual fetch + Bearer token, NOT OpenAPI codegen hooks; match it for new asset endpoints.
+- [Forge UI foundation](forge-ui-foundation.md) — Phase 1 Metroidvania theme: components/ui/ houses all shared primitives; colors.ts holds fantasy palette; theme.ts holds gradients/glows/shadows.
