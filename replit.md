@@ -1,6 +1,6 @@
-# [Project name]
+# GenForgeAI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+AI-assisted game-asset studio: generate sprites/sheets/covers, slice sprite sheets into frames, preview them as animations, and export engine-ready bundles. Mobile (Expo) frontend backed by an Express/Drizzle/Postgres API.
 
 ## Run & Operate
 
@@ -22,15 +22,25 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/api-server/src/routes/assets.ts` — asset CRUD, generate, sprite-sheet `POST /assets/:id/slice` and `GET /assets/:id/export` (zip).
+- `artifacts/api-server/src/lib/spriteSheet.ts` — slice geometry (source of truth for frame rects).
+- `artifacts/api-server/src/lib/objectStorage.ts` — object storage helpers (`getObjectStream`/`keyFromUrl`/`uploadBuffer`/`deleteObject`); `readObject` is local to `assets.ts`.
+- `artifacts/mobile/app/(tabs)/assets.tsx` — asset grid + lightbox; exports the `ApiAsset` interface.
+- `artifacts/mobile/components/SpriteSheetToolsModal.tsx` — slice controls, frame grid, play-as-animation, export.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Assets use the manual `fetch` + Bearer-token pattern, NOT the OpenAPI codegen hooks. Match it for new asset endpoints.
+- Sprite-sheet export requires a prior slice: it builds the bundle from persisted `metadata.sheet`/`metadata.frames` and returns 409 if absent (no on-demand slicing in the GET). The slice endpoint persists `margin`/`spacing` so the atlas geometry is reproducible.
+- Export atlas format is TexturePacker JSON Hash (Phaser-native, generically importable). Bundle = original sheet PNG + `frames/` PNGs + atlas JSON + `manifest.json` + `README.txt`.
+- Export is an authenticated GET (owner check + `assets/` key-prefix guard), streamed with `Content-Disposition` — not served via `/api/files`.
+- Honesty convention: the export fails explicitly (404/409) on any missing/invalid frame rather than emitting a partial zip.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Generate game assets (sprites, sprite sheets, covers, characters, etc.) from prompts.
+- Slice a sprite sheet into a grid of frames (rows/cols/margin/spacing), preview the frame grid, and play frames as a looping animation at adjustable FPS.
+- Export an engine-ready zip (sheet + frame PNGs + TexturePacker atlas + manifest + README) and share/download it from the device.
 
 ## User preferences
 

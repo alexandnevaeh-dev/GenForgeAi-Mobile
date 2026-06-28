@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AssetCreatorModal, { type CreatedAsset } from "@/components/AssetCreatorModal";
+import SpriteSheetToolsModal from "@/components/SpriteSheetToolsModal";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -89,6 +90,7 @@ export default function AssetsScreen() {
   const [regenLoading, setRegenLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [creatorVisible, setCreatorVisible] = useState(false);
+  const [spriteToolsAsset, setSpriteToolsAsset] = useState<ApiAsset | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
@@ -171,6 +173,12 @@ export default function AssetsScreen() {
     ]);
   }, [accessToken]);
 
+  const handleSliced = useCallback((assetId: string, metadata: Record<string, unknown>) => {
+    setAllAssets((prev) => prev.map((a) => a.id === assetId ? { ...a, metadata } : a));
+    setLightbox((l) => l?.id === assetId ? { ...l, metadata } : l);
+    setSpriteToolsAsset((s) => s?.id === assetId ? { ...s, metadata } : s);
+  }, []);
+
   const handleAssetCreated = useCallback((asset: CreatedAsset) => {
     const newAsset: ApiAsset = {
       id:           asset.id,
@@ -207,6 +215,14 @@ export default function AssetsScreen() {
       visible={creatorVisible}
       onClose={() => setCreatorVisible(false)}
       onCreated={handleAssetCreated}
+    />
+
+    {/* ── Sprite Sheet Tools Modal ──────────────────────────────────────── */}
+    <SpriteSheetToolsModal
+      visible={!!spriteToolsAsset}
+      asset={spriteToolsAsset}
+      onClose={() => setSpriteToolsAsset(null)}
+      onSliced={handleSliced}
     />
 
     {/* ── Floating Action Button ────────────────────────────────────────── */}
@@ -286,6 +302,19 @@ export default function AssetsScreen() {
                 {regenLoading
                   ? <ActivityIndicator size="small" color="#fff" />
                   : <><Feather name="refresh-cw" size={15} color="#fff" /><Text style={styles.lightboxBtnText}>Regenerate</Text></>}
+              </Pressable>
+            )}
+            {!!lightbox.url && !lightbox.url.startsWith("data:") && (
+              <Pressable
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSpriteToolsAsset(lightbox);
+                  setLightbox(null);
+                }}
+                style={[styles.lightboxBtn, { backgroundColor: "#7B2FFF" }]}
+              >
+                <Feather name="film" size={15} color="#fff" />
+                <Text style={styles.lightboxBtnText}>Frames</Text>
               </Pressable>
             )}
             <Pressable
