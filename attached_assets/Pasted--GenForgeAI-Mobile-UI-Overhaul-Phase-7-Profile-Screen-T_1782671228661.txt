@@ -1,0 +1,567 @@
+# GenForgeAI Mobile UI Overhaul – Phase 7
+
+## Profile Screen – The Hall of the Creator
+
+### Objective
+
+Redesign only the **Profile** screen (`app/(tabs)/profile.tsx`) and its related **Edit Profile** modal into an immersive **Hall of the Creator** where users manage their account, AI preferences, subscriptions, and security inside a premium fantasy environment.
+
+**Preserve 100% of the existing functionality**, including authentication, API calls, providers, routing, navigation, settings persistence, state management, and business logic.
+
+This phase is visual and UX only.
+
+---
+
+# Theme
+
+The Profile screen should feel like entering the personal chamber of a Master Creator inside the GenForgeAI universe.
+
+Visual inspiration:
+
+* Grand observatory tower
+* Ancient throne room
+* Crystal archives
+* Arcane mirrors
+* Floating books
+* Magical vaults
+* Blue energy
+* Gold trim
+* Animated celestial sky
+
+---
+
+# Animated Background
+
+Replace the flat background with a layered fantasy environment.
+
+Layers:
+
+* Observatory walls
+* Giant circular window
+* Night sky
+* Stars
+* Floating crystals
+* Ancient bookshelves
+* Soft fog
+* Magical particles
+
+Use gentle parallax.
+
+---
+
+# Profile Card
+
+Maintain existing functionality.
+
+Redesign into a premium Creator Identity panel.
+
+Include:
+
+Large animated avatar frame
+
+Tier crystal
+
+Username
+
+Display Name
+
+Email
+
+Creator Rank
+
+Joined status (if available)
+
+Avatar frame should:
+
+Glow softly
+
+Rotate faint energy
+
+Pulse when editing
+
+Camera badge becomes an animated crystal icon.
+
+---
+
+# Tier Badge
+
+Transform subscription tiers into magical emblems.
+
+Guest
+
+Stone emblem
+
+Free
+
+Bronze crest
+
+Pro
+
+Blue crystal crest
+
+Studio
+
+Purple arcane crest
+
+Enterprise
+
+Golden legendary crest
+
+Each badge has:
+
+Glow
+
+Animated border
+
+Premium appearance
+
+---
+
+# Statistics Grid
+
+Maintain existing data.
+
+Cards:
+
+Projects
+
+Completed
+
+AI Runs
+
+Assets
+
+Each card includes:
+
+Animated icon
+
+Large value
+
+Small label
+
+Crystal accent
+
+Count-up animation when data loads
+
+---
+
+# AI Credits Panel
+
+Redesign into an Arcane Energy Reserve.
+
+Progress bar becomes:
+
+Animated magical energy conduit
+
+Display:
+
+Credits Remaining
+
+Credits Used
+
+Monthly Reset
+
+Unlimited badge (if applicable)
+
+When below 20%:
+
+Bar shifts toward amber
+
+Subtle warning glow
+
+---
+
+# Profile Navigation Tabs
+
+Keep:
+
+Account
+
+Subscription
+
+Security
+
+Transform into magical segmented controls.
+
+Selected tab:
+
+Blue crystal
+
+Animated glow
+
+Smooth sliding indicator
+
+---
+
+# Account Section
+
+Every settings group becomes a stone panel.
+
+Groups:
+
+Profile
+
+Connected Accounts
+
+AI Settings
+
+Notifications
+
+Generation Defaults
+
+Support
+
+Each group receives:
+
+Decorative header
+
+Metal frame
+
+Soft lighting
+
+Rune divider
+
+---
+
+# Connected Accounts
+
+Represent each provider as a magical seal.
+
+Google
+
+GitHub
+
+Apple
+
+Discord
+
+Microsoft
+
+Linked accounts:
+
+Green glow
+
+Connected chain icon
+
+Unlinked:
+
+Blue crystal button
+
+Press animation
+
+---
+
+# AI Settings
+
+Transform controls into premium magical controls.
+
+AI Model
+
+Crystal selector
+
+Generation Quality
+
+Animated segmented crystal
+
+Export Engines
+
+Rune selector
+
+Dark Mode
+
+Animated enchanted switch
+
+Do not change existing functionality.
+
+---
+
+# Notification Settings
+
+Maintain all current toggles.
+
+Visual redesign:
+
+Crystal switches
+
+Animated transitions
+
+Glow when enabled
+
+---
+
+# Generation Defaults
+
+Genre selector
+
+Art Style selector
+
+Become magical chip pickers.
+
+Selected chips:
+
+Blue glow
+
+Ripple animation
+
+Floating highlight
+
+Maintain current API integration.
+
+---
+
+# Footer Actions
+
+Help
+
+Feedback
+
+Sign Out
+
+Sign In
+
+Transform into magical action cards.
+
+Sign Out:
+
+Red engraved rune
+
+Animated warning
+
+Confirmation styling remains consistent.
+
+---
+
+# Subscription Tab
+
+Create a premium subscription hall.
+
+Current plan displayed inside an ornate crystal panel.
+
+Include:
+
+Tier emblem
+
+Benefits
+
+Credits
+
+Storage
+
+Priority Queue
+
+Upgrade path
+
+Other plans displayed as elegant comparison cards.
+
+Selected plan glows softly.
+
+---
+
+# Security Tab
+
+Transform into a magical vault.
+
+Include:
+
+Multi-factor Authentication
+
+Crystal shield
+
+Session Management
+
+Ancient key panel
+
+Password Change
+
+Rune lock panel
+
+Active Sessions
+
+Animated connection nodes
+
+Visual only unless functionality already exists.
+
+---
+
+# Edit Profile Modal
+
+Maintain behavior.
+
+Transform into a floating magical editor.
+
+Features:
+
+Glass background
+
+Animated entrance
+
+Crystal handle
+
+Profile preview
+
+Inputs
+
+Dark magical glass
+
+Blue focus glow
+
+Validation
+
+Animated warning text
+
+Buttons
+
+Cancel
+
+Stone style
+
+Save
+
+Blue crystal
+
+Loading:
+
+Rotating magical energy ring
+
+---
+
+# Guest Experience
+
+If unauthenticated:
+
+Display a welcoming Creator Portal.
+
+Large crystal
+
+Benefits list
+
+Create Account CTA
+
+Continue as Guest remains available if already implemented.
+
+---
+
+# Ambient Effects
+
+Use subtle animations:
+
+Floating particles
+
+Star twinkles
+
+Moving fog
+
+Crystal shimmer
+
+Soft light rays
+
+Maintain performance.
+
+---
+
+# Reusable Components
+
+Create reusable components where appropriate:
+
+CreatorProfileCard
+
+CrystalTierBadge
+
+MagicSettingsPanel
+
+EnergyCreditsBar
+
+CrystalSwitch
+
+RuneSegmentedControl
+
+FantasyInput
+
+MagicActionCard
+
+VaultPanel
+
+These should be reusable across the application.
+
+---
+
+# Performance
+
+Requirements:
+
+60 FPS
+
+Lazy load decorative assets
+
+Memoized settings groups
+
+GPU-friendly animations
+
+Minimal rerenders
+
+Efficient scrolling
+
+---
+
+# Accessibility
+
+Support:
+
+Reduced motion
+
+Screen readers
+
+Dynamic text sizing
+
+Large touch targets
+
+High contrast
+
+Keyboard navigation where applicable
+
+---
+
+# Preserve Completely
+
+Authentication
+
+User profile editing
+
+Subscription logic
+
+Connected accounts
+
+AI settings
+
+Notification settings
+
+Generation defaults
+
+Security settings
+
+Providers
+
+Contexts
+
+Routing
+
+Business logic
+
+API calls
+
+State management
+
+---
+
+# Deliverables
+
+When complete provide:
+
+* Files modified
+* Components created
+* Animation systems added
+* Artwork placeholders required
+* Performance optimizations
+* Shared UI components created for future phases
+
+Do not modify any screens outside `app/(tabs)/profile.tsx` and the existing Edit Profile modal.
