@@ -259,20 +259,20 @@ Number of Bosses: ${p.numBosses}`;
 
   const now = new Date();
   let coverArtUrl: string | undefined;
-  const imageInserts: { name: string; type: string; category: string; url: string; mimeType: string }[] = [];
+  const imageInserts: { name: string; type: string; category: string; url: string; mimeType: string; model: string; provider: string }[] = [];
 
   if (coverRes.status === "fulfilled") {
-    coverArtUrl = coverRes.value;
-    imageInserts.push({ name: `${project.title} — Cover Art`, type: "sprite", category: "cover", url: coverRes.value, mimeType: "image/png" });
+    coverArtUrl = coverRes.value.url;
+    imageInserts.push({ name: `${project.title} — Cover Art`, type: "sprite", category: "cover", url: coverRes.value.url, mimeType: coverRes.value.mimeType, model: coverRes.value.model, provider: coverRes.value.provider });
   }
   if (protagonistRes.status === "fulfilled") {
-    imageInserts.push({ name: `${imgCtx.protagonistName ?? "Protagonist"} — Character Art`, type: "sprite", category: "character", url: protagonistRes.value, mimeType: "image/png" });
+    imageInserts.push({ name: `${imgCtx.protagonistName ?? "Protagonist"} — Character Art`, type: "sprite", category: "character", url: protagonistRes.value.url, mimeType: protagonistRes.value.mimeType, model: protagonistRes.value.model, provider: protagonistRes.value.provider });
   }
   if (bossRes.status === "fulfilled") {
-    imageInserts.push({ name: `${imgCtx.bossName ?? "Boss"} — Boss Art`, type: "sprite", category: "boss", url: bossRes.value, mimeType: "image/png" });
+    imageInserts.push({ name: `${imgCtx.bossName ?? "Boss"} — Boss Art`, type: "sprite", category: "boss", url: bossRes.value.url, mimeType: bossRes.value.mimeType, model: bossRes.value.model, provider: bossRes.value.provider });
   }
   if (envRes.status === "fulfilled") {
-    imageInserts.push({ name: `${imgCtx.worldName ?? "Environment"} — World Art`, type: "environment", category: "environment", url: envRes.value, mimeType: "image/png" });
+    imageInserts.push({ name: `${imgCtx.worldName ?? "Environment"} — World Art`, type: "environment", category: "environment", url: envRes.value.url, mimeType: envRes.value.mimeType, model: envRes.value.model, provider: envRes.value.provider });
   }
 
   const insertedAssets = imageInserts.length > 0
@@ -287,7 +287,7 @@ Number of Bosses: ${p.numBosses}`;
           thumbnailUrl: img.url,
           mimeType: img.mimeType,
           tags: [p.genre, p.artStyle],
-          metadata: { generatedBy: "gpt-image-1", phase: 4, imgCtx },
+          metadata: { generatedBy: img.model, provider: img.provider, phase: 4, imgCtx },
           createdAt: now,
           updatedAt: now,
         }))
@@ -297,7 +297,8 @@ Number of Bosses: ${p.numBosses}`;
   for (const asset of insertedAssets) {
     onEvent({ event: "asset_generated", assetId: asset.id, name: asset.name, category: asset.category, imageUrl: asset.url });
   }
-  void recordTask(projectId, ownerId, "Image Generator", "assets", tImages, "gpt-image-1", "completed");
+  const imageGenModel = imageInserts[0]?.model ?? "image-router";
+  void recordTask(projectId, ownerId, "Image Generator", "assets", tImages, imageGenModel, "completed");
 
   const updatePayload: Record<string, unknown> = { assetManifest: [assetData], progress: 66, updatedAt: new Date() };
   if (coverArtUrl) updatePayload.coverArt = coverArtUrl;

@@ -1,3 +1,6 @@
 - [Data honesty convention](data-honesty-convention.md) — never fabricate/simulate/Math.random data for authed users; honest empty/error/unpublished states; guest sim only when isGuest.
 - [Replit object storage gotchas](replit-object-storage.md) — bare `new Storage()` can't auth (use sidecar creds); buckets block `makePublic()` — serve via app route + relative URL.
 - [OpenAI gpt-image-1 sizes](openai-image-sizes.md) — only 1024x1024/1024x1536/1536x1024/auto work; integration's stale 512x512/256x256 union rejected at runtime.
+- [image-router decision](image-router.md) — all image gen goes through lib/image-router (provider failover); gemini adapter must stay lazy; persist real model/provider provenance.
+- [api-server bundle externals](api-server-bundle-externals.md) — esbuild externalizes @google/*, @aws-sdk/* etc.; such transitive deps must be DIRECT deps of api-server or startup ERR_MODULE_NOT_FOUND.
+- [Sprite-sheet slicing](sprite-sheet-slicing.md) — explicit grid (no auto-detect); /api/files allowlist only permits 2 segments after assets/ so served frame keys must be flat.

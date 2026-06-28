@@ -1,0 +1,18 @@
+{
+  "name": "@workspace/image-router",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workspace/integrations-openai-ai-server": "workspace:*",
+    "@workspace/integrations-gemini-ai": "workspace:*",
+    "@google/genai": "^1.44.0",
+    "openai": "^6.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}

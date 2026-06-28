@@ -23,7 +23,23 @@ import { useColors } from "@/hooks/useColors";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AssetCategory = "sprite" | "portrait" | "background" | "icon" | "tileset" | "vfx" | "environment" | "cover";
+type AssetCategory =
+  | "sprite"
+  | "spritesheet"
+  | "portrait"
+  | "background"
+  | "environment"
+  | "cover"
+  | "splash"
+  | "tileset"
+  | "texture"
+  | "icon"
+  | "ui"
+  | "item"
+  | "vfx"
+  | "concept";
+
+type Quality = "fast" | "high";
 
 interface CategoryDef {
   id: AssetCategory;
@@ -57,14 +73,20 @@ interface Props {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES: CategoryDef[] = [
-  { id: "sprite",      label: "Character Sprite",  icon: "user",      description: "Animated game character, game-ready" },
+  { id: "sprite",      label: "Character Sprite",  icon: "user",      description: "Single game character, transparent" },
+  { id: "spritesheet", label: "Sprite Sheet",       icon: "film",      description: "Grid of animation frames" },
   { id: "portrait",    label: "Portrait",           icon: "camera",    description: "Face & shoulders, expressive detail" },
   { id: "background",  label: "Background",         icon: "image",     description: "Wide scene for game levels" },
-  { id: "environment", label: "Environment Art",    icon: "map",       description: "Landscapes, concept environments" },
+  { id: "environment", label: "Environment Art",    icon: "map",       description: "Landscapes & concept worlds" },
   { id: "cover",       label: "Cover Art",          icon: "star",      description: "Cinematic title / marketing art" },
-  { id: "tileset",     label: "Tileset",            icon: "grid",      description: "Seamlessly tiling texture pattern" },
-  { id: "icon",        label: "Game Icon / UI",     icon: "layout",    description: "Small UI icons with clear silhouette" },
-  { id: "vfx",         label: "VFX / Particle",     icon: "zap",       description: "Magic, impact, or particle effects" },
+  { id: "splash",      label: "Splash Screen",      icon: "monitor",   description: "Loading / title-ready artwork" },
+  { id: "tileset",     label: "Tileset",            icon: "grid",      description: "Seamlessly tiling pattern" },
+  { id: "texture",     label: "Texture",            icon: "droplet",   description: "Seamless tileable surface" },
+  { id: "icon",        label: "Game Icon",          icon: "tag",       description: "Small icon, clear silhouette" },
+  { id: "ui",          label: "UI Element",         icon: "sliders",   description: "Interface art, crisp edges" },
+  { id: "item",        label: "Item",               icon: "package",   description: "Single object, transparent" },
+  { id: "vfx",         label: "VFX / Particle",     icon: "zap",       description: "Magic, impact, particle effects" },
+  { id: "concept",     label: "Concept Art",        icon: "edit-3",    description: "Exploratory mood illustration" },
 ];
 
 const STYLES: StyleDef[] = [
@@ -88,13 +110,19 @@ const STYLES: StyleDef[] = [
 
 const PROMPT_HINTS: Partial<Record<AssetCategory, string>> = {
   sprite:      "e.g. armored elven ranger with a glowing bow",
+  spritesheet: "e.g. knight idle, walk and attack animation frames",
   portrait:    "e.g. wise old wizard with a long silver beard",
   background:  "e.g. misty forest at dawn with ancient ruins",
   environment: "e.g. volcanic mountain pass with lava rivers",
   cover:       "e.g. hero standing before a dark castle gate",
+  splash:      "e.g. epic title screen with a hero silhouette",
   tileset:     "e.g. mossy stone dungeon floor with cracks",
+  texture:     "e.g. weathered cobblestone path, seamless",
   icon:        "e.g. fire sword icon for attack ability",
+  ui:          "e.g. wooden health bar frame with gems",
+  item:        "e.g. glowing health potion in a glass vial",
   vfx:         "e.g. purple arcane explosion with sparks",
+  concept:     "e.g. floating sky city concept, dramatic light",
 };
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
@@ -126,6 +154,7 @@ export default function AssetCreatorModal({ visible, onClose, onCreated, default
   const [assetName, setAssetName]   = useState("");
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated]   = useState<CreatedAsset | null>(null);
+  const [quality, setQuality]       = useState<Quality>("fast");
 
   // Scanning animation for the generation state
   const scanAnim = useRef(new Animated.Value(0)).current;
@@ -139,6 +168,7 @@ export default function AssetCreatorModal({ visible, onClose, onCreated, default
       setAssetName("");
       setGenerating(false);
       setGenerated(null);
+      setQuality("fast");
     }
   }, [visible]);
 
@@ -188,6 +218,7 @@ export default function AssetCreatorModal({ visible, onClose, onCreated, default
           prompt: prompt.trim(),
           style,
           category,
+          quality,
           name: assetName.trim() || undefined,
           projectId: defaultProjectId,
         }),
@@ -433,6 +464,36 @@ export default function AssetCreatorModal({ visible, onClose, onCreated, default
           </Text>
         </View>
 
+        {/* Quality picker */}
+        <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>QUALITY</Text>
+        <View style={styles.qualityRow}>
+          {([
+            { id: "fast", label: "Standard", sub: "Fast • auto-routed", icon: "zap" },
+            { id: "high", label: "High Quality", sub: "Slower • best model", icon: "award" },
+          ] as { id: Quality; label: string; sub: string; icon: string }[]).map((q) => {
+            const active = quality === q.id;
+            return (
+              <Pressable
+                key={q.id}
+                onPress={() => { Haptics.selectionAsync(); setQuality(q.id); }}
+                style={({ pressed }) => [
+                  styles.qualityChip,
+                  {
+                    backgroundColor: active ? colors.primary + "18" : colors.card,
+                    borderColor: active ? colors.primary : colors.border,
+                    borderWidth: active ? 1.5 : 1,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Feather name={q.icon as any} size={14} color={active ? colors.primary : colors.mutedForeground} />
+                <Text style={[styles.qualityLabel, { color: active ? colors.primary : colors.foreground }]}>{q.label}</Text>
+                <Text style={[styles.qualitySub, { color: colors.mutedForeground }]}>{q.sub}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {/* Generate button */}
         <Pressable
           onPress={handleGenerate}
@@ -624,6 +685,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tipText: { flex: 1, fontSize: 12, lineHeight: 17 },
+
+  qualityRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  qualityChip: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    alignItems: "flex-start",
+    gap: 4,
+  },
+  qualityLabel: { fontSize: 13, fontWeight: "700", letterSpacing: -0.2 },
+  qualitySub:   { fontSize: 10 },
 
   generateBtn: {
     flexDirection: "row",

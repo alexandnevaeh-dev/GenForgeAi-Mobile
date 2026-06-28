@@ -8,11 +8,14 @@ import {
   genBossArt,
   genEnvironmentArt,
   genCustomAsset,
+  ASSET_CATEGORIES,
   type GameImageCtx,
 } from "../lib/imageGen";
 import { requireAuth } from "../middleware/requireAuth";
 
 const router = Router();
+
+const ALLOWED_CUSTOM_CATEGORIES = new Set<string>(ASSET_CATEGORIES);
 
 type ImageType = "cover" | "protagonist" | "boss" | "environment" | "custom";
 
@@ -60,10 +63,10 @@ router.post("/projects/:id/images/generate-all", requireAuth, async (req, res) =
   const errors: Record<string, string> = {};
 
   await Promise.allSettled([
-    genCoverArt(ctx, projectId).then((u) => { results.cover = u; }).catch((e: unknown) => { errors.cover = String(e); }),
-    genProtagonistArt(ctx, projectId).then((u) => { results.protagonist = u; }).catch((e: unknown) => { errors.protagonist = String(e); }),
-    genBossArt(ctx, projectId).then((u) => { results.boss = u; }).catch((e: unknown) => { errors.boss = String(e); }),
-    genEnvironmentArt(ctx, projectId).then((u) => { results.environment = u; }).catch((e: unknown) => { errors.environment = String(e); }),
+    genCoverArt(ctx, projectId).then((r) => { results.cover = r.url; }).catch((e: unknown) => { errors.cover = String(e); }),
+    genProtagonistArt(ctx, projectId).then((r) => { results.protagonist = r.url; }).catch((e: unknown) => { errors.protagonist = String(e); }),
+    genBossArt(ctx, projectId).then((r) => { results.boss = r.url; }).catch((e: unknown) => { errors.boss = String(e); }),
+    genEnvironmentArt(ctx, projectId).then((r) => { results.environment = r.url; }).catch((e: unknown) => { errors.environment = String(e); }),
   ]);
 
   if (results.cover) {
@@ -91,27 +94,29 @@ router.post("/projects/:id/images/:type", requireAuth, async (req, res) => {
   const ctx = buildCtx(project);
 
   try {
-    let url: string;
+    let gen: { url: string; model: string; provider: string };
 
     if (type === "cover") {
-      url = await genCoverArt(ctx, projectId);
-      await db.update(projects).set({ coverArt: url }).where(eq(projects.id, projectId));
+      gen = await genCoverArt(ctx, projectId);
+      await db.update(projects).set({ coverArt: gen.url }).where(eq(projects.id, projectId));
     } else if (type === "protagonist") {
-      url = await genProtagonistArt(ctx, projectId);
+      gen = await genProtagonistArt(ctx, projectId);
     } else if (type === "boss") {
-      url = await genBossArt(ctx, projectId);
+      gen = await genBossArt(ctx, projectId);
     } else if (type === "environment") {
-      url = await genEnvironmentArt(ctx, projectId);
+      gen = await genEnvironmentArt(ctx, projectId);
     } else if (type === "custom") {
-      const { prompt, category } = req.body as { prompt?: string; category?: string };
+      const { prompt, category, quality } = req.body as { prompt?: string; category?: string; quality?: string };
       if (!prompt) { res.status(400).json({ error: "prompt required for custom type" }); return; }
-      url = await genCustomAsset({ prompt, style: ctx.artStyle, category: category ?? "sprite", projectId });
+      const cat = category && ALLOWED_CUSTOM_CATEGORIES.has(category) ? category : "sprite";
+      const q = quality === "high" ? "high" : "fast";
+      gen = await genCustomAsset({ prompt, style: ctx.artStyle, category: cat, projectId, quality: q });
     } else {
       res.status(400).json({ error: "Invalid type. Use: cover | protagonist | boss | environment | custom" });
       return;
     }
 
-    res.json({ url, type, projectId });
+    res.json({ url: gen.url, model: gen.model, provider: gen.provider, type, projectId });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Image generation failed";
     req.log.error({ err: e }, "Image generation failed");

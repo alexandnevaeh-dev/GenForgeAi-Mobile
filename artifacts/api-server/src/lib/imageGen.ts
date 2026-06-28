@@ -1,4 +1,4 @@
-import { generateImageBuffer } from "@workspace/integrations-openai-ai-server";
+import { generateImage, type ImageCategory } from "@workspace/image-router";
 import { uploadBuffer } from "./objectStorage";
 
 export interface GameImageCtx {
@@ -10,6 +10,32 @@ export interface GameImageCtx {
   bossName?: string;
   worldName?: string;
   tone?: string;
+}
+
+/** Result of an image generation: the served URL plus provider/model provenance. */
+export interface GenImage {
+  url: string;
+  model: string;
+  provider: string;
+  mimeType: string;
+}
+
+/**
+ * Asset categories exposed to clients for custom/single asset generation.
+ * Source of truth for the request Zod enum (assets route) and the custom-image
+ * category allowlist (images route), so the two never drift.
+ */
+export const ASSET_CATEGORIES = [
+  "sprite", "spritesheet", "portrait", "background", "environment",
+  "cover", "splash", "tileset", "texture", "icon", "ui", "item", "vfx", "concept",
+] as const;
+export type AssetCategory = (typeof ASSET_CATEGORIES)[number];
+
+/** Map an image mime type to a file extension allowed by the /api/files serving route. */
+function extFor(mimeType: string): "png" | "jpg" | "webp" {
+  if (mimeType === "image/jpeg" || mimeType === "image/jpg") return "jpg";
+  if (mimeType === "image/webp") return "webp";
+  return "png";
 }
 
 function styleHint(artStyle: string): string {
@@ -25,45 +51,49 @@ function styleHint(artStyle: string): string {
   }
 }
 
-export async function genCoverArt(ctx: GameImageCtx, projectId: string): Promise<string> {
+export async function genCoverArt(ctx: GameImageCtx, projectId: string): Promise<GenImage> {
   const prompt =
     `Game cover art for "${ctx.title}", a ${ctx.genre} game. ` +
     `${ctx.prompt.slice(0, 180)}. ` +
     `Style: ${styleHint(ctx.artStyle)}. ` +
     `Cinematic composition, dramatic lighting, hero and world visible. No text or logos.`;
-  const buf = await generateImageBuffer(prompt, "1024x1024");
-  return uploadBuffer(`assets/${projectId}/cover-${Date.now()}.png`, buf, "image/png");
+  const img = await generateImage("cover", prompt);
+  const url = await uploadBuffer(`assets/${projectId}/cover-${Date.now()}.${extFor(img.mimeType)}`, img.buffer, img.mimeType);
+  return { url, model: img.model, provider: img.provider, mimeType: img.mimeType };
 }
 
-export async function genProtagonistArt(ctx: GameImageCtx, projectId: string): Promise<string> {
+export async function genProtagonistArt(ctx: GameImageCtx, projectId: string): Promise<GenImage> {
   const name = ctx.protagonistName ?? "the protagonist";
   const prompt =
     `${styleHint(ctx.artStyle)} character concept art for ${name}, ` +
     `hero of "${ctx.title}" (${ctx.genre} game). ` +
     `Full body, facing forward, clear white background, detailed equipment and costume. No text.`;
-  const buf = await generateImageBuffer(prompt, "1024x1536");
-  return uploadBuffer(`assets/${projectId}/protagonist-${Date.now()}.png`, buf, "image/png");
+  const img = await generateImage("character", prompt);
+  const url = await uploadBuffer(`assets/${projectId}/protagonist-${Date.now()}.${extFor(img.mimeType)}`, img.buffer, img.mimeType);
+  return { url, model: img.model, provider: img.provider, mimeType: img.mimeType };
 }
 
-export async function genBossArt(ctx: GameImageCtx, projectId: string): Promise<string> {
+export async function genBossArt(ctx: GameImageCtx, projectId: string): Promise<GenImage> {
   const name = ctx.bossName ?? "the main antagonist";
   const prompt =
     `${styleHint(ctx.artStyle)} character concept art for ${name}, ` +
     `primary antagonist of "${ctx.title}" (${ctx.genre} game). ` +
     `Menacing pose, dramatic design, white background. No text.`;
-  const buf = await generateImageBuffer(prompt, "1024x1536");
-  return uploadBuffer(`assets/${projectId}/boss-${Date.now()}.png`, buf, "image/png");
+  const img = await generateImage("boss", prompt);
+  const url = await uploadBuffer(`assets/${projectId}/boss-${Date.now()}.${extFor(img.mimeType)}`, img.buffer, img.mimeType);
+  return { url, model: img.model, provider: img.provider, mimeType: img.mimeType };
 }
 
-export async function genEnvironmentArt(ctx: GameImageCtx, projectId: string): Promise<string> {
+export async function genEnvironmentArt(ctx: GameImageCtx, projectId: string): Promise<GenImage> {
   const world = ctx.worldName ?? "the game world";
   const toneStr = ctx.tone ? `${ctx.tone} atmosphere. ` : "";
   const prompt =
     `${styleHint(ctx.artStyle)} environment concept art for ${world} ` +
     `in "${ctx.title}" (${ctx.genre} game). ` +
     `${toneStr}Detailed landscape, atmospheric lighting, no characters, no text.`;
-  const buf = await generateImageBuffer(prompt, "1536x1024");
-  return uploadBuffer(`assets/${projectId}/environment-${Date.now()}.png`, buf, "image/png");
+  const img = await generateImage("environment", prompt);
+  const url = await uploadBuffer(`assets/${projectId}/environment-${Date.now()}.${extFor(img.mimeType)}`, img.buffer, img.mimeType);
+  return { url, model: img.model, provider: img.provider, mimeType: img.mimeType };
 }
 
 const STYLE_PROMPTS: Record<string, string> = {
@@ -85,44 +115,69 @@ const STYLE_PROMPTS: Record<string, string> = {
   "Isometric":    "isometric pixel art, 45-degree axonometric view, detailed environment, clean",
 };
 
+const CAT_HINTS: Record<string, string> = {
+  sprite:      "single game character sprite, full body, centered, transparent background, game-ready",
+  spritesheet: "sprite sheet: an evenly-spaced grid of animation frames of the SAME character at a consistent size and camera angle (e.g. idle, walk, attack cycle), uniform cell spacing, transparent background, game-ready",
+  portrait:    "character portrait, face and shoulders, expressive, detailed",
+  background:  "wide landscape scene, game background art, horizontal composition",
+  icon:        "game UI icon, small and readable, clear silhouette, square format",
+  ui:          "game UI element, clean readable interface art, crisp edges",
+  tileset:     "game tileset, seamlessly tiling texture pattern, top-down view",
+  texture:     "seamless tileable game texture, even lighting, no seams",
+  vfx:         "VFX sprite, particle effect, magic or impact effect, transparent background",
+  environment: "environment art, detailed scene, game concept art, wide shot",
+  cover:       "game cover art, dramatic composition, title-ready artwork, cinematic",
+  concept:     "game concept art, exploratory illustration, mood and lighting",
+  splash:      "splash / loading screen art, title-ready, cinematic composition",
+  item:        "game item art, single object, clear silhouette, transparent background",
+};
+
+/** Map an app asset category string onto a router image category. */
+function toImageCategory(category: string): ImageCategory {
+  const known: ImageCategory[] = [
+    "cover", "character", "boss", "environment", "background", "sprite",
+    "spritesheet", "portrait", "icon", "ui", "tileset", "texture", "vfx",
+    "concept", "splash", "item",
+  ];
+  return (known as string[]).includes(category) ? (category as ImageCategory) : "custom";
+}
+
 /**
  * Generate a custom asset from a user prompt, style, and category.
- * Returns the persistent GCS URL.
+ * Routes through the image-router (provider failover) and returns the served URL.
  */
 export async function genCustomAsset(opts: {
   prompt: string;
   style: string;
   category: string;
   projectId?: string;
-}): Promise<string> {
-  const styleHint = STYLE_PROMPTS[opts.style] ?? `${opts.style} art style`;
-  const catHint =
-    opts.category === "sprite"      ? "game character sprite, transparent background, game-ready" :
-    opts.category === "portrait"    ? "character portrait, face and shoulders, expressive, detailed" :
-    opts.category === "background"  ? "wide landscape scene, game background art, horizontal composition" :
-    opts.category === "icon"        ? "game UI icon, small and readable, clear silhouette, square format" :
-    opts.category === "tileset"     ? "game tileset preview, seamlessly tiling texture pattern, top-down view" :
-    opts.category === "vfx"        ? "VFX sprite, particle effect, magic or impact effect, transparent background" :
-    opts.category === "environment" ? "environment art, detailed scene, game concept art, wide shot" :
-    opts.category === "cover"       ? "game cover art, dramatic composition, title-ready artwork, cinematic" :
-    "game art asset";
-  const fullPrompt = `${styleHint}. ${catHint}. ${opts.prompt}. High quality, game-ready, professional.`;
-  const size = "1024x1024" as const;
-  const buf = await generateImageBuffer(fullPrompt, size);
+  quality?: "fast" | "high";
+}): Promise<GenImage> {
+  const styleText = STYLE_PROMPTS[opts.style] ?? `${opts.style} art style`;
+  const catHint = CAT_HINTS[opts.category] ?? "game art asset";
+  const fullPrompt = `${styleText}. ${catHint}. ${opts.prompt}. High quality, game-ready, professional.`;
+  const img = await generateImage(toImageCategory(opts.category), fullPrompt, {
+    quality: opts.quality ?? "fast",
+  });
   const slug = opts.projectId ?? "standalone";
-  const url = await uploadBuffer(`assets/${slug}/custom-${opts.category}-${Date.now()}.png`, buf, "image/png");
-  return url;
+  const catSlug = opts.category.replace(/[^a-z0-9-]/gi, "").toLowerCase() || "asset";
+  const url = await uploadBuffer(
+    `assets/${slug}/custom-${catSlug}-${Date.now()}.${extFor(img.mimeType)}`,
+    img.buffer,
+    img.mimeType
+  );
+  return { url, model: img.model, provider: img.provider, mimeType: img.mimeType };
 }
 
 /**
  * Regenerate a single asset image by category.
- * Returns the new persistent GCS URL.
+ * Returns the new served URL plus provider/model provenance.
  */
 export async function regenAsset(
   category: "cover" | "character" | "boss" | "environment",
   ctx: GameImageCtx,
   projectId: string
-): Promise<string> {
+): Promise<GenImage> {
   switch (category) {
     case "cover":       return genCoverArt(ctx, projectId);
     case "character":   return genProtagonistArt(ctx, projectId);
