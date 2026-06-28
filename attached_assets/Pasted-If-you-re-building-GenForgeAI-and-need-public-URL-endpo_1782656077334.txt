@@ -1,0 +1,352 @@
+If you're building GenForgeAI and need public URL endpoints that can generate game assets (sprites, pixel art, HD textures, UI, concept art, 2D assets, icons, etc.), I'd structure it like this.
+
+Tier 1 – Best Free/Public APIs
+
+These either have free tiers or allow direct HTTP API access.
+
+Provider	Public API	Free Tier	Good For
+
+Hugging Face	Yes	✅	Thousands of open image models
+Replicate	Yes	Limited	FLUX, SDXL, Pixel models
+fal.ai	Yes	Limited	Very fast image generation
+Cloudflare Workers AI	Yes	✅	Open models via REST
+Together AI	Yes	Credits	FLUX, SDXL
+OpenRouter	Yes	Some free models	Unified API access
+Google	Yes	Generous	Gemini image capabilities and other AI models 
+
+
+
+---
+
+Tier 2 – Open Models
+
+These are excellent if you want GenForgeAI to choose the best model automatically.
+
+HD Concept Art
+
+FLUX Dev
+
+FLUX Schnell
+
+Stable Diffusion XL
+
+Stable Diffusion 3.5
+
+PixArt Sigma
+
+Sana
+
+Qwen-Image
+
+
+These produce:
+
+environments
+
+fantasy
+
+sci-fi
+
+characters
+
+monsters
+
+props
+
+UI art
+
+splash screens
+
+
+FLUX and Stable Diffusion remain among the strongest open ecosystems for high-quality image generation. 
+
+
+---
+
+Pixel Art Models
+
+These specialize in game-ready sprites.
+
+PixelArtXL
+
+Retro Diffusion
+
+Sprite Diffusion
+
+PixelDojo models
+
+SDXL Pixel LoRAs
+
+FLUX Pixel LoRAs
+
+
+Great for:
+
+RPG sprites
+
+Metroidvania enemies
+
+NPCs
+
+tilesets
+
+weapons
+
+icons
+
+inventory art
+
+
+Community experience suggests specialized pixel-art LoRAs often outperform general-purpose models for sprite work. 
+
+
+---
+
+Anime / 2D
+
+AnythingXL
+
+Animagine XL
+
+Pony Diffusion
+
+Counterfeit XL
+
+AAM XL
+
+
+Perfect for
+
+JRPG
+
+Visual Novel
+
+Anime games
+
+
+
+---
+
+Texture Generation
+
+Generate
+
+grass
+
+dirt
+
+lava
+
+stone
+
+wood
+
+brick
+
+cave
+
+ice
+
+metal
+
+
+Models
+
+SDXL
+
+FLUX
+
+Texture-specific LoRAs
+
+
+
+---
+
+Icons/UI
+
+Generate
+
+inventory icons
+
+buttons
+
+HUD
+
+health bars
+
+spell icons
+
+menus
+
+
+Models
+
+FLUX
+
+SDXL
+
+Icon LoRAs
+
+
+
+---
+
+Character Sheets
+
+Generate
+
+front
+
+side
+
+back
+
+attack
+
+jump
+
+idle
+
+death
+
+
+Automatically slice into sprite sheets after generation.
+
+
+---
+
+Tilesets
+
+Generate
+
+16×16
+
+32×32
+
+64×64
+
+seamless terrain
+
+dungeon tiles
+
+forests
+
+interiors
+
+
+Then validate tile connectivity before importing into the engine.
+
+
+---
+
+Recommended GenForgeAI Pipeline
+
+Prompt
+
+↓
+
+Asset Classifier
+
+↓
+
+Choose Best Model
+
+↓
+
+Generate Asset
+
+↓
+
+Upscale (if needed)
+
+↓
+
+Background Removal
+
+↓
+
+Sprite Sheet Generator
+
+↓
+
+Animation Generator
+
+↓
+
+Auto Tile Builder
+
+↓
+
+Game Engine Import
+
+↓
+
+Cache Asset
+
+↓
+
+Public URL Returned
+
+
+---
+
+Asset Types GenForgeAI Should Support
+
+Pixel art
+
+HD 2D art
+
+Character portraits
+
+Sprite sheets
+
+Animated sprites
+
+Tilesets
+
+Seamless textures
+
+Backgrounds
+
+UI packs
+
+Icons
+
+Logos
+
+Weapons
+
+Armor
+
+Enemies
+
+NPCs
+
+Bosses
+
+Particles
+
+Skill effects
+
+Spell icons
+
+Collectibles
+
+Buildings
+
+Props
+
+Decals
+
+Item cards
+
+Dialogue portraits
+
+Loading screens
+
+Splash art
+
+Promotional art
+
+
+This combination of model routing plus public inference APIs will give GenForgeAI broad coverage for generating game-ready assets without being locked to a single provider, while allowing it to automatically pick the most appropriate model for each asset type.
