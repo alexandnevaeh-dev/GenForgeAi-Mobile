@@ -213,6 +213,23 @@ export const templates = pgTable("templates", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const communityPosts = pgTable("community_posts", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  authorId:  uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content:   text("content").notNull(),
+  type:      text("type").notNull().default("tip"),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  likes:     integer("likes").notNull().default(0),
+  comments:  integer("comments").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const communityLikes = pgTable("community_likes", {
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: uuid("post_id").notNull().references(() => communityPosts.id, { onDelete: "cascade" }),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Project = typeof projects.$inferSelect;

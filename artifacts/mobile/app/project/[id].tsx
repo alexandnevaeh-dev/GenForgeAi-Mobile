@@ -34,6 +34,7 @@ import { StoreListingPanel } from "@/components/StoreListingPanel";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { LiveOpsPanel } from "@/components/LiveOpsPanel";
 import { MonetizationPanel } from "@/components/MonetizationPanel";
+import { ImageGenPanel } from "@/components/ImageGenPanel";
 import { OrchestratorDashboard } from "@/components/OrchestratorDashboard";
 import { ModelRouterPanel } from "@/components/ModelRouterPanel";
 import { TelemetryPanel } from "@/components/TelemetryPanel";
@@ -541,6 +542,12 @@ export default function ProjectDetailScreen() {
             )}
 
             <AssetGenerationPanel />
+            <ImageGenPanel
+              projectId={project.id}
+              projectTitle={project.title}
+              genre={project.genre}
+              artStyle={project.artStyle}
+            />
           </View>
         )}
 
