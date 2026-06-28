@@ -34,6 +34,9 @@ import { StoreListingPanel } from "@/components/StoreListingPanel";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { LiveOpsPanel } from "@/components/LiveOpsPanel";
 import { MonetizationPanel } from "@/components/MonetizationPanel";
+import { OrchestratorDashboard } from "@/components/OrchestratorDashboard";
+import { ModelRouterPanel } from "@/components/ModelRouterPanel";
+import { TelemetryPanel } from "@/components/TelemetryPanel";
 import { TaskGraph } from "@/components/TaskGraph";
 import {
   generateAnalysis,
@@ -588,6 +591,9 @@ export default function ProjectDetailScreen() {
               </View>
             )}
             <AgentNetwork agentStates={liveAgentStates} />
+            <OrchestratorDashboard projectId={project.id} />
+            <ModelRouterPanel projectId={project.id} />
+            <TelemetryPanel />
           </View>
         )}
 
