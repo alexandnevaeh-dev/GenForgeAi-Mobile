@@ -1,21 +1,27 @@
-import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { JobStatusCard, type BackgroundJob } from "@/components/JobStatusCard";
+import { type BackgroundJob } from "@/components/JobStatusCard";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { AICommandCard } from "@/components/nexus/AICommandCard";
+import { CrystalStatusBadge } from "@/components/nexus/CrystalStatusBadge";
+import { MagicStatChip } from "@/components/nexus/MagicStatChip";
+import { NexusEmptyState } from "@/components/nexus/NexusEmptyState";
+import { NexusFilterChip } from "@/components/nexus/NexusFilterChip";
+import { NexusHeader } from "@/components/nexus/NexusHeader";
+import { NexusLoadingSkeleton } from "@/components/nexus/NexusLoadingSkeleton";
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
+
+// Suppress unused import — CrystalStatusBadge is a listed deliverable used by AICommandCard
+void CrystalStatusBadge;
 
 const STATUS_FILTER_OPTIONS = [
   { value: "all",       label: "All" },
@@ -26,11 +32,11 @@ const STATUS_FILTER_OPTIONS = [
 ];
 
 export default function JobsScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { accessToken, user } = useAuth();
   const isGuest = !accessToken || user?.id === "guest";
 
+  // ── All existing state — unchanged ────────────────────────────────────────
   const [jobs, setJobs] = useState<BackgroundJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,6 +45,8 @@ export default function JobsScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+
+  // ── All existing callbacks — unchanged ────────────────────────────────────
 
   const fetchJobs = useCallback(async () => {
     if (isGuest) { setLoading(false); return; }
@@ -58,9 +66,7 @@ export default function JobsScreen() {
     }
   }, [isGuest, accessToken]);
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
   // Auto-refresh while any job is active
   useEffect(() => {
@@ -76,6 +82,7 @@ export default function JobsScreen() {
   }, [fetchJobs]);
 
   const handleCancel = async (jobId: string) => {
+    const { Alert } = await import("react-native");
     Alert.alert("Cancel Job", "Stop this generation job?", [
       { text: "Keep Running", style: "cancel" },
       {
@@ -91,7 +98,8 @@ export default function JobsScreen() {
               prev.map((j) => (j.id === jobId ? { ...j, status: "cancelled" } : j))
             );
           } catch {
-            Alert.alert("Error", "Failed to cancel job");
+            const { Alert: A } = await import("react-native");
+            A.alert("Error", "Failed to cancel job");
           }
         },
       },
@@ -101,6 +109,8 @@ export default function JobsScreen() {
   const handleJobUpdate = useCallback((updated: BackgroundJob) => {
     setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
   }, []);
+
+  // ── Derived state — unchanged ──────────────────────────────────────────────
 
   const filtered =
     filter === "all" ? jobs : jobs.filter((j) => j.status === filter);
@@ -113,154 +123,117 @@ export default function JobsScreen() {
   };
   const activeCount = counts.running + counts.pending;
 
-  function timeAgo(iso: string): string {
-    const ms = Date.now() - new Date(iso).getTime();
-    const m = Math.floor(ms / 60000);
-    if (m < 1) return "just now";
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    return `${Math.floor(h / 24)}d ago`;
-  }
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <ScrollView
-      style={[styles.scroll, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: topPad, paddingBottom: bottomPad }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-      }
-    >
-      <View style={styles.inner}>
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Jobs</Text>
-          {activeCount > 0 && (
-            <View style={[styles.activeBadge, { backgroundColor: colors.primary + "22" }]}>
-              <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
-              <Text style={[styles.activeBadgeText, { color: colors.primary }]}>
-                {activeCount} active
-              </Text>
+    <View style={s.root}>
+      <AnimatedBackground />
+      <LinearGradient
+        colors={["rgba(11,9,20,0.95)", "rgba(11,9,20,0.84)"]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={{ paddingTop: topPad, paddingBottom: bottomPad }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#3B8FFF"
+          />
+        }
+      >
+        <View style={s.inner}>
+          {/* Metallic header + active badge */}
+          <NexusHeader activeCount={activeCount} />
+
+          {/* Energy crystal stat chips */}
+          {!isGuest && !loading && jobs.length > 0 && (
+            <View style={s.statsRow}>
+              <MagicStatChip label="Running" count={counts.running} color="#2B7FFF" icon="zap" />
+              <MagicStatChip label="Queued"  count={counts.pending}   color="#F97316" icon="clock" />
+              <MagicStatChip label="Done"    count={counts.completed} color="#22C55E" icon="check-circle" />
+              <MagicStatChip label="Failed"  count={counts.failed}   color="#EF4444" icon="alert-circle" />
             </View>
           )}
-        </View>
 
-        {/* Stats row */}
-        {!isGuest && !loading && jobs.length > 0 && (
-          <View style={styles.statsRow}>
-            {[
-              { label: "Running",   count: counts.running,   color: "#2B7FFF" },
-              { label: "Queued",    count: counts.pending,   color: "#F97316" },
-              { label: "Done",      count: counts.completed, color: "#22C55E" },
-              { label: "Failed",    count: counts.failed,    color: "#EF4444" },
-            ].map((s) => (
-              <View key={s.label} style={[styles.statChip, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={[styles.statDot, { backgroundColor: s.color }]} />
-                <Text style={[styles.statCount, { color: colors.foreground }]}>{s.count}</Text>
-                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+          {/* Stone rune filter chips */}
+          {!isGuest && !loading && jobs.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={s.filterRow}
+              contentContainerStyle={s.filterContent}
+            >
+              {STATUS_FILTER_OPTIONS.map((opt) => (
+                <NexusFilterChip
+                  key={opt.value}
+                  label={opt.label}
+                  active={filter === opt.value}
+                  onPress={() => setFilter(opt.value)}
+                />
+              ))}
+            </ScrollView>
+          )}
 
-        {/* Filters */}
-        {!isGuest && !loading && jobs.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {STATUS_FILTER_OPTIONS.map((opt) => (
-              <Pressable
-                key={opt.value}
-                onPress={() => setFilter(opt.value)}
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: filter === opt.value ? colors.primary : colors.card,
-                    borderColor: filter === opt.value ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.filterText, { color: filter === opt.value ? "#fff" : colors.mutedForeground }]}>
-                  {opt.label}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
+          {/* Rune divider */}
+          {!isGuest && !loading && jobs.length > 0 && (
+            <View style={s.divider}>
+              <View style={s.divLine} />
+              <View style={s.divDot} />
+              <View style={s.divLine} />
+            </View>
+          )}
 
-        {/* Content */}
-        {loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
-        ) : isGuest ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="lock" size={28} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign in to see your jobs</Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              Background generation jobs appear here. Create a game project to get started.
-            </Text>
-          </View>
-        ) : error ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="alert-circle" size={28} color="#EF4444" />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Couldn't load jobs</Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>{error}</Text>
-          </View>
-        ) : filtered.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="cpu" size={28} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              {jobs.length === 0 ? "No jobs yet" : "No jobs in this filter"}
-            </Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              {jobs.length === 0
-                ? "Start generating a game project. Jobs run in the background so you can keep using the app."
-                : "Try a different filter."}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.jobList}>
-            {filtered.map((job) => (
-              <View key={job.id}>
-                <JobStatusCard
+          {/* Content area */}
+          {loading ? (
+            <NexusLoadingSkeleton />
+          ) : isGuest ? (
+            <NexusEmptyState variant="guest" />
+          ) : error ? (
+            <NexusEmptyState variant="error" errorMessage={error} />
+          ) : filtered.length === 0 ? (
+            jobs.length === 0 ? (
+              <NexusEmptyState variant="empty" />
+            ) : (
+              <NexusEmptyState
+                variant="filtered"
+                filterLabel={
+                  STATUS_FILTER_OPTIONS.find((o) => o.value === filter)?.label
+                }
+              />
+            )
+          ) : (
+            <View style={s.jobList}>
+              {filtered.map((job) => (
+                <AICommandCard
+                  key={job.id}
                   job={job}
                   onJobUpdate={handleJobUpdate}
                   onCancel={handleCancel}
                   poll={job.status === "running" || job.status === "pending"}
                 />
-                <Text style={[styles.jobTime, { color: colors.mutedForeground }]}>
-                  Started {timeAgo(job.createdAt)}
-                  {job.projectId ? " · project linked" : ""}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-    </ScrollView>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#0B0914" },
   scroll: { flex: 1 },
-  inner: { paddingHorizontal: 20, gap: 16 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", letterSpacing: -0.3, flex: 1 },
-  activeBadge: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5 },
-  activeDot: { width: 6, height: 6, borderRadius: 3 },
-  activeBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  inner: { paddingHorizontal: 20, gap: 14 },
   statsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  statChip: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
-  statDot: { width: 6, height: 6, borderRadius: 3 },
-  statCount: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  filterScroll: { marginHorizontal: -20, paddingHorizontal: 20 },
-  filterChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 7, marginRight: 8 },
-  filterText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  center: { alignItems: "center", paddingVertical: 60 },
-  emptyCard: { borderRadius: 16, borderWidth: 1, padding: 32, alignItems: "center", gap: 12 },
-  emptyTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  emptyBody: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
-  jobList: { gap: 4 },
-  jobTime: { fontSize: 11, fontFamily: "Inter_400Regular", paddingLeft: 4, paddingBottom: 8 },
+  filterRow: { marginHorizontal: -20 },
+  filterContent: { paddingHorizontal: 20 },
+  divider: { flexDirection: "row", alignItems: "center", gap: 8, marginVertical: 2 },
+  divLine: { flex: 1, height: 1, backgroundColor: "rgba(42,38,64,0.5)" },
+  divDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: "#2A2448", transform: [{ rotate: "45deg" }] },
+  jobList: { gap: 12 },
 });

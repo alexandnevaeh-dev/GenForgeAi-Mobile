@@ -1,0 +1,468 @@
+# GenForgeAI Mobile UI Overhaul – Phase 6
+
+## Jobs Screen – The AI Command Nexus
+
+### Objective
+
+Redesign only the **Jobs** screen (`app/(tabs)/jobs.tsx`) into a real-time **AI Command Nexus** where users monitor every AI agent and generation pipeline as if they are inside a magical command center.
+
+**Preserve all existing functionality** including polling, filtering, job cancellation, API calls, providers, navigation, authentication, and state management.
+
+This phase is **visual and UX only**.
+
+---
+
+# Theme
+
+The Jobs screen should resemble a futuristic fantasy command room where hundreds of AI agents are coordinating the creation of worlds.
+
+Visual inspiration:
+
+* Arcane control center
+* Floating holographic displays
+* Crystal-powered machinery
+* Animated rune circles
+* Energy conduits
+* Observatory ceiling
+* Mechanical constructs
+* Magical consoles
+
+---
+
+# Animated Background
+
+Replace the flat background with layered scenery.
+
+Layers:
+
+* Observatory walls
+* AI core reactor
+* Floating holograms
+* Rotating rune circles
+* Blue energy beams
+* Fog
+* Magic particles
+
+Use subtle parallax.
+
+---
+
+# Header
+
+Keep:
+
+* Jobs title
+* Active badge
+
+Redesign visually.
+
+Title:
+
+* Metallic engraving
+* Blue magical glow
+* Slow shimmer
+
+Active Badge:
+
+Animated crystal
+
+Live pulsing energy
+
+Small rotating ring
+
+Displays active job count exactly as before.
+
+---
+
+# Statistics Chips
+
+Maintain logic.
+
+Transform into magical energy crystals.
+
+Running
+
+Queued
+
+Completed
+
+Failed
+
+Each chip displays:
+
+Animated icon
+
+Live count
+
+Crystal glow
+
+Appropriate color coding
+
+Smooth number transitions.
+
+---
+
+# Filter Chips
+
+Preserve behavior.
+
+Visual redesign:
+
+Stone rune chips
+
+Blue glow when selected
+
+Ripple animation
+
+Hover/press scaling
+
+---
+
+# Job Cards
+
+Completely redesign JobStatusCard.
+
+Each job becomes an AI command console.
+
+Include:
+
+Project icon
+
+Job title
+
+Pipeline stage
+
+Elapsed time
+
+Status crystal
+
+Progress energy bar
+
+Assigned AI agents
+
+Current generation step
+
+Each card should have:
+
+Stone frame
+
+Glass overlay
+
+Depth shadows
+
+Animated energy borders
+
+Hover animation
+
+---
+
+# Live Progress
+
+Jobs actively running should feel alive.
+
+Add:
+
+Flowing energy bar
+
+Animated particles
+
+Moving runes
+
+Glowing borders
+
+Progress updates animate smoothly.
+
+---
+
+# AI Pipeline Visualization
+
+Inside active jobs display a compact pipeline.
+
+Example:
+
+Planning
+
+↓
+
+World Generation
+
+↓
+
+Gameplay Systems
+
+↓
+
+Assets
+
+↓
+
+Animation
+
+↓
+
+Audio
+
+↓
+
+QA
+
+↓
+
+Export
+
+Completed nodes:
+
+Green crystal
+
+Current:
+
+Blue animated crystal
+
+Pending:
+
+Stone rune
+
+Do not change pipeline logic.
+
+---
+
+# Agent Visualization
+
+Each running job displays miniature AI agents.
+
+Represent them as glowing nodes connected by animated energy lines.
+
+Show live agent count if available.
+
+---
+
+# Job Completion
+
+When a job finishes:
+
+Border flashes green once
+
+Success animation
+
+Status crystal changes smoothly
+
+Progress locks at 100%
+
+No intrusive popups.
+
+---
+
+# Failed Jobs
+
+Failed jobs receive:
+
+Red magical glow
+
+Broken crystal icon
+
+Failure explanation area
+
+Retry button placeholder (visual only unless already implemented)
+
+---
+
+# Cancel Job
+
+Keep existing functionality.
+
+Redesign confirmation dialog.
+
+Theme:
+
+Ancient rune warning tablet
+
+Animated red crystal
+
+Destructive action emphasized
+
+Maintain current DELETE endpoint.
+
+---
+
+# Empty State
+
+If there are no jobs:
+
+Display:
+
+Dormant AI Core
+
+Inactive crystals
+
+Empty command room
+
+Primary text:
+
+"No active AI operations"
+
+Secondary CTA:
+
+Start Creating a Game
+
+Visual only if current navigation already exists.
+
+---
+
+# Guest State
+
+Maintain behavior.
+
+Visual redesign:
+
+Locked command center
+
+Blue magical lock
+
+Premium sign-in card
+
+---
+
+# Loading State
+
+Replace spinner-only experience with animated command consoles.
+
+Display:
+
+Loading holograms
+
+Crystal shimmer
+
+Energy flow
+
+Skeleton command panels
+
+---
+
+# Pull to Refresh
+
+Maintain functionality.
+
+Visual enhancement:
+
+Rotating magical rune
+
+Blue energy pulse
+
+Crystal charging animation
+
+---
+
+# Ambient Effects
+
+Use lightweight animations:
+
+Floating dust
+
+Blue sparks
+
+Energy arcs
+
+Fog
+
+Rotating holograms
+
+Keep battery usage low.
+
+---
+
+# Reusable Components
+
+Create reusable components where appropriate:
+
+AICommandCard
+
+CrystalStatusBadge
+
+PipelineTimeline
+
+EnergyProgressBar
+
+AgentCluster
+
+MagicStatChip
+
+RuneRefreshIndicator
+
+These components should be reusable in Project Detail and AI Studio.
+
+---
+
+# Performance
+
+Requirements:
+
+60 FPS
+
+Virtualized job list
+
+Memoized cards
+
+GPU animations only
+
+Minimal rerenders
+
+Efficient polling
+
+Lazy-loaded artwork
+
+---
+
+# Accessibility
+
+Support:
+
+Reduced motion
+
+Screen readers
+
+Large touch targets
+
+High contrast
+
+Dynamic text sizing
+
+---
+
+# Preserve Completely
+
+Polling
+
+Filtering
+
+Job cancellation
+
+API endpoints
+
+Navigation
+
+Authentication
+
+Providers
+
+Contexts
+
+Business logic
+
+Routing
+
+State management
+
+---
+
+# Deliverables
+
+When complete provide:
+
+* Files modified
+* Components created
+* Animation systems added
+* Artwork placeholders required
+* Performance optimizations
+* Shared UI components created for later phases
+
+Do not modify any screens outside `app/(tabs)/jobs.tsx`.
