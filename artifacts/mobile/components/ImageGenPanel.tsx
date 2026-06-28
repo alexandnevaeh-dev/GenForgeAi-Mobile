@@ -38,7 +38,8 @@ interface Props {
 
 export function ImageGenPanel({ projectId }: Props) {
   const colors = useColors();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+  const isGuest = !accessToken || user?.id === "guest";
 
   const [images, setImages]   = useState<Partial<Record<ImageType, string>>>({});
   const [loading, setLoading] = useState<Partial<Record<ImageType, boolean>>>({});
@@ -91,6 +92,19 @@ export function ImageGenPanel({ projectId }: Props) {
     } finally {
       setAllLoading(false);
     }
+  }
+
+  // ── Guest / not signed in ──
+  if (isGuest) {
+    return (
+      <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Feather name="image" size={22} color={colors.mutedForeground} />
+        <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign in to generate artwork</Text>
+        <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          AI image generation runs on the server against a saved project. Sign in with an account to create cover art, characters, and environments.
+        </Text>
+      </View>
+    );
   }
 
   return (
@@ -220,4 +234,7 @@ const styles = StyleSheet.create({
   genBtn:             { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
   genBtnText:         { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   footerNote:         { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 17, textAlign: "center" },
+  emptyCard:          { alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, padding: 24 },
+  emptyTitle:         { fontSize: 14, fontFamily: "Inter_700Bold", textAlign: "center" },
+  emptyText:          { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center" },
 });

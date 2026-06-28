@@ -41,7 +41,7 @@ export async function genProtagonistArt(ctx: GameImageCtx, projectId: string): P
     `${styleHint(ctx.artStyle)} character concept art for ${name}, ` +
     `hero of "${ctx.title}" (${ctx.genre} game). ` +
     `Full body, facing forward, clear white background, detailed equipment and costume. No text.`;
-  const buf = await generateImageBuffer(prompt, "512x512");
+  const buf = await generateImageBuffer(prompt, "1024x1536");
   return uploadBuffer(`assets/${projectId}/protagonist-${Date.now()}.png`, buf, "image/png");
 }
 
@@ -51,7 +51,7 @@ export async function genBossArt(ctx: GameImageCtx, projectId: string): Promise<
     `${styleHint(ctx.artStyle)} character concept art for ${name}, ` +
     `primary antagonist of "${ctx.title}" (${ctx.genre} game). ` +
     `Menacing pose, dramatic design, white background. No text.`;
-  const buf = await generateImageBuffer(prompt, "512x512");
+  const buf = await generateImageBuffer(prompt, "1024x1536");
   return uploadBuffer(`assets/${projectId}/boss-${Date.now()}.png`, buf, "image/png");
 }
 
@@ -62,7 +62,7 @@ export async function genEnvironmentArt(ctx: GameImageCtx, projectId: string): P
     `${styleHint(ctx.artStyle)} environment concept art for ${world} ` +
     `in "${ctx.title}" (${ctx.genre} game). ` +
     `${toneStr}Detailed landscape, atmospheric lighting, no characters, no text.`;
-  const buf = await generateImageBuffer(prompt, "512x512");
+  const buf = await generateImageBuffer(prompt, "1536x1024");
   return uploadBuffer(`assets/${projectId}/environment-${Date.now()}.png`, buf, "image/png");
 }
 

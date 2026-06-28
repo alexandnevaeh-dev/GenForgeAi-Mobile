@@ -1,1 +1,3 @@
 - [Data honesty convention](data-honesty-convention.md) — never fabricate/simulate/Math.random data for authed users; honest empty/error/unpublished states; guest sim only when isGuest.
+- [Replit object storage gotchas](replit-object-storage.md) — bare `new Storage()` can't auth (use sidecar creds); buckets block `makePublic()` — serve via app route + relative URL.
+- [OpenAI gpt-image-1 sizes](openai-image-sizes.md) — only 1024x1024/1024x1536/1536x1024/auto work; integration's stale 512x512/256x256 union rejected at runtime.
