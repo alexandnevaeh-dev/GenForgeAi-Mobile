@@ -1,0 +1,604 @@
+# GenForgeAI Mobile UI Overhaul – Phase 8
+
+## Authentication Experience – The Creator's Gateway
+
+### Objective
+
+Redesign only the authentication flow:
+
+* `app/auth/login.tsx`
+* `app/auth/register.tsx`
+
+Transform the experience into a cinematic **Creator's Gateway** while preserving **100% of the existing authentication logic**, validation, API calls, navigation, providers, guest mode, and state management.
+
+Do **not** modify authentication behavior.
+
+---
+
+# Overall Theme
+
+Signing into GenForgeAI should feel like entering an ancient world-building academy.
+
+Visual inspiration:
+
+* Giant magical gateway
+* Floating portals
+* Ancient library
+* Blue magical fire
+* Crystal pillars
+* Animated constellations
+* Arcane energy
+* Celestial observatory
+
+The experience should feel premium without slowing down the application.
+
+---
+
+# Animated Background
+
+Replace flat backgrounds with layered environments.
+
+Layers:
+
+Sky
+
+↓
+
+Constellations
+
+↓
+
+Floating islands
+
+↓
+
+Ancient gateway
+
+↓
+
+Magic circles
+
+↓
+
+Blue fog
+
+↓
+
+Particles
+
+Every layer should move subtly.
+
+---
+
+# Shared Authentication Components
+
+Create reusable components:
+
+AuthBackground
+
+MagicInput
+
+CrystalButton
+
+AuthCard
+
+PortalDivider
+
+AnimatedLogo
+
+SocialLoginCard
+
+GuestCard
+
+These should be shared by Login and Register.
+
+---
+
+# Animated Logo
+
+Keep the existing GenForgeAI branding.
+
+Enhance it.
+
+Features:
+
+Metallic logo
+
+Blue glowing AI text
+
+Energy pulse
+
+Occasional shimmer
+
+Slow floating animation
+
+---
+
+# Login Screen
+
+Preserve:
+
+Email
+
+Password
+
+OAuth buttons
+
+Guest mode
+
+Forgot password
+
+Validation
+
+Navigation
+
+API logic
+
+Visual redesign only.
+
+---
+
+# Hero Area
+
+Large animated logo.
+
+Subtitle:
+
+"Forge Worlds Through Artificial Intelligence"
+
+Behind the logo:
+
+Rotating magical circle
+
+Crystal energy
+
+Floating particles
+
+---
+
+# OAuth Buttons
+
+Maintain current providers.
+
+Google
+
+Apple
+
+GitHub
+
+Discord
+
+Microsoft
+
+Each provider receives:
+
+Premium card
+
+Hover animation
+
+Press animation
+
+Provider icon
+
+Soft glow
+
+Maintain existing functionality.
+
+---
+
+# Divider
+
+Replace simple divider with:
+
+Ancient engraved line
+
+Animated crystal
+
+Centered "OR"
+
+---
+
+# Email Input
+
+Replace default input styling.
+
+Features:
+
+Dark magical glass
+
+Blue glow on focus
+
+Animated caret
+
+Rune border
+
+Validation animation
+
+---
+
+# Password Input
+
+Maintain eye toggle.
+
+Visual enhancements:
+
+Crystal lock icon
+
+Focus animation
+
+Strength indicator placeholder
+
+Animated validation
+
+---
+
+# Forgot Password
+
+Transform into:
+
+Small glowing magical link
+
+Underline animation
+
+Hover effect
+
+---
+
+# Login Button
+
+Become a massive magical crystal.
+
+Features:
+
+Blue gradient
+
+Energy flowing beneath surface
+
+Glow
+
+Ripple
+
+Loading animation:
+
+Crystal charges
+
+Energy rotates
+
+Progress pulse
+
+---
+
+# Security Notice
+
+Display inside a magical information panel.
+
+Include:
+
+TLS
+
+JWT
+
+MFA
+
+Small crystal shield icon
+
+---
+
+# Guest Mode
+
+Maintain guest functionality.
+
+Display inside a separate premium card.
+
+Include:
+
+Guest benefits
+
+Remaining credits
+
+Limitations
+
+Animated portal button
+
+---
+
+# Register Screen
+
+Maintain current two-step flow.
+
+Visual redesign only.
+
+---
+
+# Step One
+
+Choose Your Plan
+
+Transform into a Hall of Guild Membership.
+
+Cards:
+
+Free
+
+Pro
+
+Studio
+
+Each becomes an animated magical membership scroll.
+
+Include:
+
+Tier crest
+
+Price
+
+Credits
+
+Projects
+
+Priority
+
+Storage
+
+Selection animation:
+
+Blue glow
+
+Crystal border
+
+Scale animation
+
+POPULAR badge receives animated sparkle.
+
+---
+
+# Continue Button
+
+Large magical crystal.
+
+Energy animation.
+
+---
+
+# Step Two
+
+Create Account
+
+Maintain existing fields.
+
+Enhance visuals.
+
+Display Name
+
+Username
+
+Email
+
+Password
+
+Each uses:
+
+MagicInput
+
+Animated validation
+
+Blue focus glow
+
+---
+
+# Password Strength
+
+Replace simple indicator.
+
+Display as:
+
+Four magical crystals.
+
+Weak
+
+Gray
+
+Medium
+
+Orange
+
+Strong
+
+Green
+
+Legendary
+
+Blue/Purple
+
+Animate as strength increases.
+
+---
+
+# Create Account Button
+
+Premium forge crystal.
+
+Animated while loading.
+
+Success:
+
+Small magical burst.
+
+---
+
+# Terms
+
+Display inside elegant stone panel.
+
+Maintain existing links.
+
+---
+
+# Already Have Account
+
+Animated text link.
+
+Smooth navigation.
+
+---
+
+# Success Animation
+
+After successful registration:
+
+Portal opens
+
+Blue particles
+
+Logo glow
+
+Navigate using existing routing.
+
+Do not modify navigation logic.
+
+---
+
+# Modal Presentation
+
+Maintain existing slide-up behavior.
+
+Enhance with:
+
+Glass blur
+
+Rounded corners
+
+Shadow depth
+
+Spring animation
+
+Backdrop fade
+
+---
+
+# Error Handling
+
+Do not change validation.
+
+Improve visuals.
+
+Error panels become:
+
+Red magical warning tablets.
+
+Field errors:
+
+Small animated rune.
+
+---
+
+# Loading States
+
+Replace simple spinner.
+
+Use:
+
+Rotating magical crystal
+
+Energy ring
+
+Blue particles
+
+Maintain accessibility.
+
+---
+
+# Ambient Effects
+
+Use subtle:
+
+Stars
+
+Fog
+
+Floating dust
+
+Energy particles
+
+Crystal shimmer
+
+All effects should pause when app enters background.
+
+---
+
+# Performance
+
+Requirements:
+
+60 FPS
+
+GPU animations
+
+Memoized components
+
+Lazy-loaded decorative assets
+
+Minimal overdraw
+
+No authentication slowdown
+
+---
+
+# Accessibility
+
+Support:
+
+Reduced motion
+
+Screen readers
+
+Keyboard navigation
+
+Dynamic text sizing
+
+High contrast
+
+Large touch targets
+
+---
+
+# Preserve Completely
+
+Authentication API
+
+JWT handling
+
+Validation
+
+OAuth flow
+
+Guest mode
+
+Navigation
+
+Providers
+
+Contexts
+
+Routing
+
+Business logic
+
+State management
+
+---
+
+# Deliverables
+
+When complete provide:
+
+* Files modified
+* Shared authentication components created
+* Animation systems added
+* Placeholder artwork list
+* Performance optimizations
+* Accessibility improvements
+
+Do not modify any screens outside the authentication flow.
+
+After this, we'll move into the largest phase of the overhaul: **Phase 9 – Project Detail**, which redesigns the 11-tab project workspace into a fully immersive AI game development command center while preserving every existing tool and workflow.

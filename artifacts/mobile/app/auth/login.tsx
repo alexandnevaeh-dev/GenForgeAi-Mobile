@@ -1,33 +1,37 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AnimatedLogo } from "@/components/gateway/AnimatedLogo";
+import { AuthBackground } from "@/components/gateway/AuthBackground";
+import { CrystalButton } from "@/components/gateway/CrystalButton";
+import { GuestCard } from "@/components/gateway/GuestCard";
+import { MagicInput } from "@/components/gateway/MagicInput";
+import { PortalDivider } from "@/components/gateway/PortalDivider";
+import { SocialLoginCard } from "@/components/gateway/SocialLoginCard";
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
 
 const PROVIDERS = [
-  { id: "google", label: "Continue with Google", icon: "globe" },
-  { id: "apple", label: "Continue with Apple", icon: "smartphone" },
-  { id: "github", label: "Continue with GitHub", icon: "github" },
-  { id: "discord", label: "Continue with Discord", icon: "message-circle" },
-  { id: "microsoft", label: "Continue with Microsoft", icon: "monitor" },
-];
+  { id: "google",    label: "Continue with Google",    icon: "globe"          },
+  { id: "apple",     label: "Continue with Apple",     icon: "smartphone"     },
+  { id: "github",    label: "Continue with GitHub",    icon: "github"         },
+  { id: "discord",   label: "Continue with Discord",   icon: "message-circle" },
+  { id: "microsoft", label: "Continue with Microsoft", icon: "monitor"        },
+] as const;
 
 export default function LoginScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { login, continueAsGuest } = useAuth();
 
@@ -59,211 +63,191 @@ export default function LoginScreen() {
     router.replace("/(tabs)");
   };
 
-  const topPad = Platform.OS === "web" ? 40 : insets.top + 16;
+  const topPad = Platform.OS === "web" ? 40 : insets.top + 12;
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={{ paddingTop: topPad, paddingBottom: insets.bottom + 32, paddingHorizontal: 24, gap: 24 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View style={s.root}>
+      <AuthBackground />
+      {/* Dark veil so content is legible */}
+      <LinearGradient
+        colors={["rgba(6,4,15,0.4)", "rgba(11,9,20,0.82)", "rgba(11,9,20,0.96)"]}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      <KeyboardAvoidingView
+        style={s.kav}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Brand */}
-        <View style={styles.brand}>
-          <View style={[styles.brandIcon, { backgroundColor: colors.primary }]}>
-            <Feather name="cpu" size={28} color="#fff" />
+        <ScrollView
+          contentContainerStyle={[s.scroll, { paddingTop: topPad, paddingBottom: insets.bottom + 32 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Animated logo hero */}
+          <AnimatedLogo subtitle="Forge Worlds Through Artificial Intelligence" />
+
+          {/* OAuth providers */}
+          <View style={s.providers}>
+            {PROVIDERS.map((p) => (
+              <SocialLoginCard
+                key={p.id}
+                label={p.label}
+                icon={p.icon}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setError("Social sign-in isn't set up yet — please sign in with your email and password below.");
+                }}
+              />
+            ))}
           </View>
-          <Text style={[styles.brandName, { color: colors.foreground }]}>
-            GenForge<Text style={{ color: colors.primary }}>AI</Text>
-          </Text>
-          <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
-            AI-Powered Game Development Studio
-          </Text>
-        </View>
 
-        {/* OAuth Providers */}
-        <View style={styles.providers}>
-          {PROVIDERS.map((p) => (
-            <Pressable
-              key={p.id}
-              style={[styles.providerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setError("Social sign-in isn't set up yet — please sign in with your email and password below.");
-              }}
-            >
-              <Feather name={p.icon as any} size={18} color={colors.foreground} />
-              <Text style={[styles.providerLabel, { color: colors.foreground }]}>{p.label}</Text>
-            </Pressable>
-          ))}
-        </View>
+          {/* Arcane divider */}
+          <PortalDivider label="or sign in with email" />
 
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>or sign in with email</Text>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-        </View>
-
-        {/* Email/Password Form */}
-        <View style={styles.form}>
+          {/* Error warning tablet */}
           {error ? (
-            <View style={[styles.errorBox, { backgroundColor: colors.destructive + "22", borderColor: colors.destructive }]}>
-              <Feather name="alert-circle" size={14} color={colors.destructive} />
-              <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
+            <View style={s.errorTablet}>
+              <LinearGradient colors={["rgba(80,10,10,0.8)", "rgba(50,10,10,0.6)"]} style={StyleSheet.absoluteFill} />
+              <View style={s.errorBorder} />
+              <Feather name="alert-triangle" size={14} color="#FF6644" />
+              <Text style={s.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          <View>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Email</Text>
-            <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="mail" size={16} color={colors.mutedForeground} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="you@example.com"
-                placeholderTextColor={colors.mutedForeground}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+          {/* Email + Password inputs */}
+          <View style={s.form}>
+            <MagicInput
+              icon="mail"
+              label="EMAIL"
+              placeholder="you@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <MagicInput
+              icon="lock"
+              label="PASSWORD"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              showPasswordToggle
+              showPassword={showPassword}
+              onTogglePassword={() => setShowPassword((v) => !v)}
+              autoCapitalize="none"
+            />
+
+            {/* Forgot password — glowing rune link */}
+            <Pressable style={s.forgotWrap}>
+              <Text style={s.forgotText}>Forgot password?</Text>
+              <View style={s.forgotUnderline} />
+            </Pressable>
+
+            <CrystalButton
+              onPress={handleLogin}
+              label="Sign In"
+              icon="log-in"
+              isLoading={isLoading}
+              disabled={isLoading}
+            />
           </View>
 
-          <View>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Password</Text>
-            <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="lock" size={16} color={colors.mutedForeground} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="••••••••"
-                placeholderTextColor={colors.mutedForeground}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <Pressable onPress={() => setShowPassword((v) => !v)}>
-                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color={colors.mutedForeground} />
-              </Pressable>
-            </View>
+          {/* Security notice panel */}
+          <View style={s.securityPanel}>
+            <LinearGradient colors={["rgba(14,12,30,0.7)", "rgba(10,8,20,0.5)"]} style={StyleSheet.absoluteFill} />
+            <View style={s.securityBorder} />
+            <Feather name="shield" size={12} color="#3A3458" />
+            <Text style={s.securityText}>Secured with TLS · JWT auth · MFA available</Text>
           </View>
 
-          <Pressable style={styles.forgotWrap}>
-            <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
-          </Pressable>
+          {/* Create account link */}
+          <View style={s.footer}>
+            <Text style={s.footerText}>Don't have an account?{" "}</Text>
+            <Pressable onPress={() => router.push("/auth/register")}>
+              <Text style={s.footerLink}>Create account</Text>
+            </Pressable>
+          </View>
 
-          <Pressable
-            onPress={handleLogin}
-            disabled={isLoading}
-            style={[styles.loginBtn, { backgroundColor: colors.primary, opacity: isLoading ? 0.7 : 1 }]}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Feather name="log-in" size={18} color="#fff" />
-                <Text style={styles.loginBtnText}>Sign In</Text>
-              </>
-            )}
-          </Pressable>
-        </View>
-
-        {/* Security note */}
-        <View style={styles.securityRow}>
-          <Feather name="shield" size={12} color={colors.mutedForeground} />
-          <Text style={[styles.securityText, { color: colors.mutedForeground }]}>
-            Secured with TLS · JWT auth · MFA available
-          </Text>
-        </View>
-
-        {/* Footer links */}
-        <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.mutedForeground }]}>Don't have an account?{" "}</Text>
-          <Pressable onPress={() => router.push("/auth/register")}>
-            <Text style={[styles.footerLink, { color: colors.primary }]}>Create account</Text>
-          </Pressable>
-        </View>
-
-        {/* Guest mode */}
-        <Pressable onPress={handleGuest} style={styles.guestBtn}>
-          <Text style={[styles.guestText, { color: colors.mutedForeground }]}>
-            Continue as Guest <Text style={{ fontFamily: "Inter_600SemiBold" }}>(10 free AI credits)</Text>
-          </Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Guest mode card */}
+          <GuestCard onPress={handleGuest} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  brand: { alignItems: "center", gap: 10, paddingTop: 16, paddingBottom: 8 },
-  brandIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandName: { fontSize: 32, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
-  tagline: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center" },
-  providers: { gap: 10 },
-  providerBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  providerLabel: { fontSize: 15, fontFamily: "Inter_500Medium" },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  dividerLine: { flex: 1, height: 1 },
-  dividerText: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  form: { gap: 14 },
-  errorBox: {
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#0B0914" },
+  kav: { flex: 1 },
+  scroll: { paddingHorizontal: 22, gap: 20 },
+
+  providers: { gap: 8 },
+
+  errorTablet: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    borderRadius: 12,
+    padding: 12,
+    overflow: "hidden",
+  },
+  errorBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(180,40,40,0.6)",
+  },
+  errorText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: "#FF8877" },
+
+  form: { gap: 14 },
+
+  forgotWrap: { alignSelf: "flex-end", gap: 2 },
+  forgotText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "#3B6FBF",
+    textShadowColor: "rgba(59,111,191,0.4)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  forgotUnderline: {
+    height: 1,
+    backgroundColor: "rgba(59,111,191,0.35)",
+    marginTop: 1,
+  },
+
+  securityPanel: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    overflow: "hidden",
+    alignSelf: "center",
+  },
+  securityBorder: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 10,
     borderWidth: 1,
-    padding: 12,
+    borderColor: "rgba(42,38,64,0.5)",
   },
-  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
-  label: { fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 6, letterSpacing: 0.3 },
-  inputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
-  forgotWrap: { alignSelf: "flex-end" },
-  forgotText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  loginBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderRadius: 14,
-    paddingVertical: 15,
-    marginTop: 4,
-  },
-  loginBtnText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#fff" },
-  securityRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
-  securityText: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  securityText: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#2A2448" },
+
   footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
-  footerText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  footerLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  guestBtn: { alignItems: "center", paddingBottom: 8 },
-  guestText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  footerText: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#3A3458" },
+  footerLink: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#3B6FBF",
+    textShadowColor: "rgba(59,111,191,0.4)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
 });
