@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -19,6 +19,8 @@ import { useNotifications } from "@/context/NotificationsContext";
 import { useProjects } from "@/context/ProjectsContext";
 import { useColors } from "@/hooks/useColors";
 
+type HomeTpl = { id: string; title: string; genre: string; priceCents: number; badge?: string };
+
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -26,6 +28,20 @@ export default function HomeScreen() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { unreadCount } = useNotifications();
+  const [trendingTemplates, setTrendingTemplates] = useState<HomeTpl[]>([]);
+
+  const fetchTrending = useCallback(async () => {
+    try {
+      const res = await fetch("/api/templates?limit=4");
+      if (!res.ok) return;
+      const data = (await res.json()) as { templates: HomeTpl[] };
+      setTrendingTemplates(data.templates.slice(0, 4));
+    } catch {
+      // non-fatal, keep empty
+    }
+  }, []);
+
+  useEffect(() => { void fetchTrending(); }, [fetchTrending]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
@@ -144,28 +160,27 @@ export default function HomeScreen() {
             </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateRow}>
-            {[
-              { name: "Dark Fantasy Starter", genre: "RPG", badge: "FREE" },
-              { name: "Cyberpunk Runner", genre: "Action", badge: "$2.99" },
-              { name: "Cozy Farm Sim", genre: "Simulation", badge: "FREE" },
-            ].map((t) => (
-              <Pressable
-                key={t.name}
-                onPress={() => router.push("/marketplace")}
-                style={[styles.templateCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              >
-                <View style={[styles.templateIcon, { backgroundColor: colors.muted }]}>
-                  <Feather name="layout" size={22} color={colors.primary} />
-                </View>
-                <Text style={[styles.templateName, { color: colors.foreground }]} numberOfLines={2}>{t.name}</Text>
-                <View style={styles.templateFooter}>
-                  <Text style={[styles.templateGenre, { color: colors.mutedForeground }]}>{t.genre}</Text>
-                  <Text style={[styles.templateBadge, { color: t.badge === "FREE" ? colors.success : colors.foreground }]}>
-                    {t.badge}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
+            {trendingTemplates.map((t) => {
+              const badge = t.badge ?? (t.priceCents === 0 ? "FREE" : `$${(t.priceCents / 100).toFixed(2)}`);
+              return (
+                <Pressable
+                  key={t.id}
+                  onPress={() => router.push("/marketplace")}
+                  style={[styles.templateCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                >
+                  <View style={[styles.templateIcon, { backgroundColor: colors.muted }]}>
+                    <Feather name="layout" size={22} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.templateName, { color: colors.foreground }]} numberOfLines={2}>{t.title}</Text>
+                  <View style={styles.templateFooter}>
+                    <Text style={[styles.templateGenre, { color: colors.mutedForeground }]}>{t.genre}</Text>
+                    <Text style={[styles.templateBadge, { color: badge === "FREE" ? colors.success : colors.foreground }]}>
+                      {badge}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
           </ScrollView>
 
           {/* Recent Projects */}

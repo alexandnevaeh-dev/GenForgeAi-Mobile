@@ -142,7 +142,7 @@ function buildFallbackAgent(role: AgentRole, seed: number, genre: string): Agent
 }
 
 /* ── POST /api/projects/:id/orchestrate ────────────────────── */
-router.post("/api/projects/:id/orchestrate", requireAuth, async (req, res) => {
+router.post("/projects/:id/orchestrate", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
 
@@ -251,7 +251,7 @@ Generate realistic confidence scores, outputs, and telemetry for each specialist
 });
 
 /* ── GET /api/orchestrate/models ────────────────────────────── */
-router.get("/api/orchestrate/models", requireAuth, async (req, res) => {
+router.get("/orchestrate/models", requireAuth, async (req, res) => {
   const taskTypes = ["foundation", "story", "characters", "assets", "balance", "coding", "chat", "packaging"] as const;
   const chains = taskTypes.map((t) => {
     const chain = getModelChain(t);

@@ -17,7 +17,7 @@ function parseJson<T>(raw: string): T | null {
 }
 
 /* ── POST /api/projects/:id/publish/validate ──────────────── */
-router.post("/api/projects/:id/publish/validate", requireAuth, async (req, res) => {
+router.post("/projects/:id/publish/validate", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
 
@@ -55,7 +55,7 @@ router.post("/api/projects/:id/publish/validate", requireAuth, async (req, res) 
 });
 
 /* ── POST /api/projects/:id/publish/store-listing ─────────── */
-router.post("/api/projects/:id/publish/store-listing", requireAuth, async (req, res) => {
+router.post("/projects/:id/publish/store-listing", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
   const platform  = (req.body?.platform ?? "google-play") as Platform;
@@ -141,7 +141,7 @@ Unique Mechanic: ${String(story.uniqueMechanic ?? "")}`;
 });
 
 /* ── POST /api/projects/:id/publish/liveops ───────────────── */
-router.post("/api/projects/:id/publish/liveops", requireAuth, async (req, res) => {
+router.post("/projects/:id/publish/liveops", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
 
@@ -218,7 +218,7 @@ Make events thematic to the genre. Include launch week event, weekly challenge, 
 });
 
 /* ── GET /api/projects/:id/publish/analytics ──────────────── */
-router.get("/api/projects/:id/publish/analytics", requireAuth, async (req, res) => {
+router.get("/projects/:id/publish/analytics", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
 

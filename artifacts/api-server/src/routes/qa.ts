@@ -101,7 +101,7 @@ function parseJson<T>(raw: string): T | null {
 }
 
 /* ── POST /api/projects/:id/qa/run ─────────────────────────── */
-router.post("/api/projects/:id/qa/run", requireAuth, async (req, res) => {
+router.post("/projects/:id/qa/run", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
 
@@ -173,7 +173,7 @@ Run a comprehensive QA analysis. Be realistic — find 2-4 bugs, give accessibil
 });
 
 /* ── POST /api/projects/:id/qa/balance ─────────────────────── */
-router.post("/api/projects/:id/qa/balance", requireAuth, async (req, res) => {
+router.post("/projects/:id/qa/balance", requireAuth, async (req, res) => {
   const projectId  = req.params["id"] as string;
   const ownerId    = req.user!.sub;
   const difficulty = (req.body?.difficulty ?? "normal") as Difficulty;
@@ -241,7 +241,7 @@ Tune balance metrics for ${difficulty} play. Provide 4-6 specific tuning changes
 });
 
 /* ── POST /api/projects/:id/qa/playtest ────────────────────── */
-router.post("/api/projects/:id/qa/playtest", requireAuth, async (req, res) => {
+router.post("/projects/:id/qa/playtest", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
   const playStyle = (req.body?.playStyle ?? "casual") as PlayStyle;
