@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.SESSION_SECRET ?? "genforge-dev-secret-change-in-prod";
@@ -15,7 +16,10 @@ export function signAccessToken(payload: JwtPayload): string {
 }
 
 export function signRefreshToken(payload: Pick<JwtPayload, "sub">): string {
-  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: "30d" });
+  // jwtid guarantees a unique token even when two tokens are minted in the
+  // same second for the same user (otherwise they collide on the
+  // refresh_tokens.token UNIQUE constraint and the insert throws).
+  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: "30d", jwtid: randomUUID() });
 }
 
 export function verifyAccessToken(token: string): JwtPayload {

@@ -188,6 +188,16 @@ export function generateAnalysis(params: GameParams): PromptAnalysis {
   const isCombat = prompt.includes("combat") || prompt.includes("battle") || prompt.includes("fight") || params.genre === "Action";
   const isOpenWorld = prompt.includes("open world") || prompt.includes("exploration") || params.worldSize === "open-world";
 
+  // Deterministic confidence derived from how richly the user specified the brief.
+  const richness = Math.min(
+    1,
+    (Math.min(prompt.length, 240) / 240) * 0.5 +
+      (params.genre ? 0.15 : 0) +
+      (params.artStyle ? 0.1 : 0) +
+      (params.platform.length > 0 ? 0.1 : 0) +
+      (params.narrativeFocus === "high" ? 0.15 : params.narrativeFocus === "medium" ? 0.08 : 0.03),
+  );
+
   return {
     genre: [params.genre, isCombat ? "Action" : "Exploration"].filter((v, i, a) => a.indexOf(v) === i),
     themes: [
@@ -208,7 +218,7 @@ export function generateAnalysis(params: GameParams): PromptAnalysis {
       "Asset generation time for complex boss designs",
       isCombat ? "Combat balance requires additional iteration passes" : "Pacing needs tuning for exploration flow",
     ],
-    confidence: 0.87 + Math.random() * 0.1,
+    confidence: Math.round((0.6 + richness * 0.35) * 100) / 100,
   };
 }
 

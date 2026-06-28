@@ -90,7 +90,10 @@ export default function LoginScreen() {
             <Pressable
               key={p.id}
               style={[styles.providerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setError("Social sign-in isn't set up yet — please sign in with your email and password below.");
+              }}
             >
               <Feather name={p.icon as any} size={18} color={colors.foreground} />
               <Text style={[styles.providerLabel, { color: colors.foreground }]}>{p.label}</Text>

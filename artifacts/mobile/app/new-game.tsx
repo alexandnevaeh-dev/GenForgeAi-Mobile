@@ -164,9 +164,11 @@ export default function NewGameScreen() {
   const [tasks, setTasks] = useState<PipelineTask[]>([]);
   const [agentStates, setAgentStates] = useState<AgentState[]>(makeInitialAgentStates());
   const [currentPhase, setCurrentPhase] = useState(0);
+  const currentPhaseRef = useRef(0);
   const [generating, setGenerating] = useState(false);
   const [generationComplete, setGenerationComplete] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [genError, setGenError] = useState<{ phase: number; message: string } | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const genViewTab = useRef<"agents" | "tasks" | "gates">("agents");
@@ -320,14 +322,23 @@ export default function NewGameScreen() {
     };
 
     let created: GameProject;
-    try {
-      created = await addProject(newProject);
-    } catch {
-      setGenerating(false);
-      return;
+    if (createdId) {
+      // Retry of an already-created project — don't create a duplicate.
+      created = { ...newProject, id: createdId };
+    } else {
+      try {
+        created = await addProject(newProject);
+      } catch {
+        setGenerating(false);
+        return;
+      }
+      setCreatedId(created.id);
     }
 
-    setCreatedId(created.id);
+    setGenError(null);
+    setGenerationComplete(false);
+    setCurrentPhase(0);
+    currentPhaseRef.current = 0;
     setAgentStates(initialAgents);
 
     const allTasks = tasks.length > 0 ? [...tasks] : generateTaskGraph(blueprint!, params);
@@ -359,8 +370,8 @@ export default function NewGameScreen() {
       });
 
       if (!response.ok || !response.body) {
-        // Fallback to simulation on connection error
-        runGuestSimulation(created.id, allTasks, params);
+        const detail = !response.ok ? `the server responded ${response.status}` : "no response stream was returned";
+        setGenError({ phase: currentPhaseRef.current, message: `Generation could not start — ${detail}.` });
         return;
       }
 
@@ -389,6 +400,7 @@ export default function NewGameScreen() {
             if (data.event === "phase_start" && data.phase !== undefined) {
               const phase = data.phase;
               const phaseAgents = AGENT_DEFS.filter((a) => a.phase === phase);
+              currentPhaseRef.current = phase;
               setCurrentPhase(phase);
               setAgentStates((prev) =>
                 prev.map((s) =>
@@ -456,8 +468,10 @@ export default function NewGameScreen() {
             }
 
             if (data.event === "error") {
-              // Fall back to simulation on AI error
-              runGuestSimulation(created.id, allTasks, params);
+              setGenError({
+                phase: data.phase ?? currentPhaseRef.current,
+                message: data.message ?? "The AI generation pipeline reported an error.",
+              });
               break;
             }
           } catch {
@@ -465,9 +479,11 @@ export default function NewGameScreen() {
           }
         }
       }
-    } catch {
-      // Network error — fall back to simulation
-      runGuestSimulation(created.id, allTasks, params);
+    } catch (err) {
+      setGenError({
+        phase: currentPhaseRef.current,
+        message: err instanceof Error ? err.message : "A network error interrupted generation.",
+      });
     }
   };
 
@@ -493,6 +509,36 @@ export default function NewGameScreen() {
             </Text>
           </View>
         </View>
+
+        {genError && (
+          <View style={{ marginHorizontal: 20, marginTop: 12, padding: 14, borderRadius: 12, borderWidth: 1, gap: 10, backgroundColor: colors.destructive + "18", borderColor: colors.destructive }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Feather name="alert-triangle" size={16} color={colors.destructive} />
+              <Text style={{ flex: 1, fontSize: 14, fontFamily: "Inter_700Bold", color: colors.destructive }}>
+                Generation failed{genError.phase > 0 ? ` at phase ${genError.phase}` : ""}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, color: colors.foreground }}>
+              {genError.message}
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Pressable
+                onPress={() => startGeneration()}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 11, borderRadius: 10, backgroundColor: colors.primary }}
+              >
+                <Feather name="refresh-cw" size={14} color="#fff" />
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Retry</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { if (createdId) router.replace(`/project/${createdId}`); else router.back(); }}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 11, borderRadius: 10, borderWidth: 1, borderColor: colors.border }}
+              >
+                <Feather name="file-text" size={14} color={colors.foreground} />
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Continue as draft</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         {/* Generation sub-tabs */}
         <View style={[styles.genTabBar, { backgroundColor: colors.muted }]}>
@@ -526,7 +572,7 @@ export default function NewGameScreen() {
             </>
           )}
           {genTab === "tasks" && <TaskGraph tasks={tasks} currentPhase={currentPhase} />}
-          {genTab === "gates" && <QualityGates />}
+          {genTab === "gates" && <QualityGates projectId={createdId ?? undefined} />}
         </ScrollView>
 
         {/* Footer */}

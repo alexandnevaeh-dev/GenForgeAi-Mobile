@@ -4,7 +4,7 @@
  */
 
 import { db } from "@workspace/db";
-import { assets, projects } from "@workspace/db/schema";
+import { aiTasks, assets, projects } from "@workspace/db/schema";
 import { routeTask } from "@workspace/ai-router";
 import { and, eq } from "drizzle-orm";
 import {
@@ -51,6 +51,73 @@ function str(v: unknown): string | undefined {
 }
 
 /**
+ * Best-effort telemetry: record one ai_tasks row per generation phase.
+ * Wrapped so a telemetry failure can never break the generation pipeline.
+ * The /api/telemetry endpoint aggregates these rows into real metrics.
+ */
+async function recordTask(
+  projectId: string,
+  ownerId: string,
+  agentName: string,
+  taskType: string,
+  startedAt: Date,
+  model: string | undefined,
+  status: "completed" | "failed" = "completed",
+  errorMessage?: string,
+): Promise<void> {
+  try {
+    const completedAt = new Date();
+    await db.insert(aiTasks).values({
+      projectId,
+      ownerId,
+      agentName,
+      agentPhase: taskType,
+      taskType,
+      status,
+      progress: status === "completed" ? 100 : 0,
+      outputData: model ? { model } : {},
+      errorMessage: errorMessage ?? null,
+      executionTimeMs: completedAt.getTime() - startedAt.getTime(),
+      startedAt,
+      completedAt,
+    });
+  } catch {
+    // telemetry is best-effort; never surface to the caller
+  }
+}
+
+/**
+ * routeTask wrapper that records a real ai_tasks telemetry row (timing, model,
+ * success/failure) around each AI call. Rethrows on error so flow is unchanged.
+ */
+async function tracked(
+  projectId: string,
+  ownerId: string,
+  agentName: string,
+  taskType: Parameters<typeof routeTask>[0],
+  messages: Parameters<typeof routeTask>[1],
+): Promise<Awaited<ReturnType<typeof routeTask>>> {
+  const startedAt = new Date();
+  try {
+    const result = await routeTask(taskType, messages);
+    void recordTask(projectId, ownerId, agentName, String(taskType), startedAt, result.model, "completed");
+    return result;
+  } catch (err) {
+    void recordTask(
+      projectId,
+      ownerId,
+      agentName,
+      String(taskType),
+      startedAt,
+      undefined,
+      "failed",
+      err instanceof Error ? err.message : "unknown error",
+    );
+    throw err;
+  }
+}
+
+/**
  * Run the full 6-phase generation for a project.
  * `onEvent` receives phase lifecycle events (same shape as the SSE stream).
  * Throws on unrecoverable error; the caller is responsible for cleanup.
@@ -91,7 +158,7 @@ Number of Bosses: ${p.numBosses}`;
 
   // ── Phase 1: Foundation ────────────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 1, label: "Foundation" });
-  const foundationResult = await routeTask("foundation", [
+  const foundationResult = await tracked(projectId, ownerId, "Foundation Agent", "foundation", [
     { role: "system", content: "You are a game design expert. Always respond with valid JSON only, no extra text." },
     { role: "user", content: `Generate a game design foundation for this game as valid JSON:\n${ctx}${memCtx}\n\nSchema: {"tagline": string, "coreLoop": string, "uniqueMechanic": string, "targetAudience": string, "genreFeatures": string[], "tone": string, "setting": string}` },
   ]);
@@ -116,7 +183,7 @@ Number of Bosses: ${p.numBosses}`;
 
   // ── Phase 2: World & Story ─────────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 2, label: "World & Story" });
-  const worldResult = await routeTask("story", [
+  const worldResult = await tracked(projectId, ownerId, "World Architect", "story", [
     { role: "system", content: "You are a world-building expert. Always respond with valid JSON only, no extra text." },
     { role: "user", content: `Generate world and story content for this game as valid JSON:\n${ctx}\nFoundation: ${JSON.stringify(storyData).slice(0, 400)}${memCtx}\n\nSchema: {"worldName": string, "loreSummary": string, "acts": [{"title": string, "summary": string}], "factions": [{"name": string, "description": string}], "theme": string, "openingHook": string}` },
   ]);
@@ -137,7 +204,7 @@ Number of Bosses: ${p.numBosses}`;
 
   // ── Phase 3: Characters & Content ─────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 3, label: "Characters & Content" });
-  const charResult = await routeTask("characters", [
+  const charResult = await tracked(projectId, ownerId, "Character Designer", "characters", [
     { role: "system", content: "You are a game character and quest designer. Always respond with valid JSON only, no extra text." },
     { role: "user", content: `Generate characters and quests for this game as valid JSON:\n${ctx}\nWorld: ${JSON.stringify(worldData).slice(0, 400)}\n\nSchema: {"protagonist": {"name": string, "backstory": string, "abilities": string[]}, "npcs": [{"name": string, "role": string, "description": string}], "enemies": [{"name": string, "type": string, "threat": string}], "bosses": [{"name": string, "description": string, "phase": string}], "quests": [{"name": string, "description": string, "reward": string}]}` },
   ]);
@@ -173,7 +240,7 @@ Number of Bosses: ${p.numBosses}`;
     tone: str(storyData.tone),
   };
 
-  const assetManifestResult = await routeTask("assets", [
+  const assetManifestResult = await tracked(projectId, ownerId, "Asset Coordinator", "assets", [
     { role: "system", content: "You are a game asset coordinator. Always respond with valid JSON only, no extra text." },
     { role: "user", content: `Generate the asset manifest for this game as valid JSON:\n${ctx}\n\nSchema: {"sprites": [{"category": string, "count": number, "style": string}], "audioTracks": [{"name": string, "type": string, "mood": string, "bpm": number}], "uiElements": [{"name": string, "description": string}], "vfxEffects": [{"name": string, "trigger": string}], "totalAssets": number}` },
   ]);
@@ -182,6 +249,7 @@ Number of Bosses: ${p.numBosses}`;
 
   onEvent({ event: "asset_generating", phase: 4, message: "Generating cover art, protagonist, boss, and environment art…" });
 
+  const tImages = new Date();
   const [coverRes, protagonistRes, bossRes, envRes] = await Promise.allSettled([
     genCoverArt(imgCtx, projectId),
     genProtagonistArt(imgCtx, projectId),
@@ -229,6 +297,7 @@ Number of Bosses: ${p.numBosses}`;
   for (const asset of insertedAssets) {
     onEvent({ event: "asset_generated", assetId: asset.id, name: asset.name, category: asset.category, imageUrl: asset.url });
   }
+  void recordTask(projectId, ownerId, "Image Generator", "assets", tImages, "gpt-image-1", "completed");
 
   const updatePayload: Record<string, unknown> = { assetManifest: [assetData], progress: 66, updatedAt: new Date() };
   if (coverArtUrl) updatePayload.coverArt = coverArtUrl;
@@ -245,7 +314,7 @@ Number of Bosses: ${p.numBosses}`;
 
   // ── Phase 5: Combat & Balance ──────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 5, label: "QA & Balance" });
-  const combatResult = await routeTask("balance", [
+  const combatResult = await tracked(projectId, ownerId, "Balance Agent", "balance", [
     { role: "system", content: "You are a game balance expert. Always respond with valid JSON only, no extra text." },
     { role: "user", content: `Generate combat and balance parameters for this game as valid JSON:\n${ctx}${memCtx}\n\nSchema: {"combatSystem": string, "coreMechanics": string[], "playerStats": {"healthRange": string, "damageRange": string, "levelCap": number}, "enemyScaling": string, "difficultyModifiers": {"easy": string, "normal": string, "hard": string}, "economy": {"currency": string, "progressionLoop": string}, "balanceNotes": string}` },
   ]);
@@ -270,6 +339,7 @@ Number of Bosses: ${p.numBosses}`;
 
   // ── Phase 6: Packaging ─────────────────────────────────────────────────────
   onEvent({ event: "phase_start", phase: 6, label: "Packaging & Export" });
+  const tPackaging = new Date();
   const exportConfigs: Record<string, unknown> = {
     primaryTarget: "Godot 4.x",
     supportedTargets: ["Godot 4.x", "HTML5", "Windows", "Android"],
@@ -283,6 +353,7 @@ Number of Bosses: ${p.numBosses}`;
     .update(projects)
     .set({ exportConfigs, status: "in_progress", progress: 100, lastGeneratedAt: new Date(), updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  void recordTask(projectId, ownerId, "Export Agent", "packaging", tPackaging, undefined, "completed");
   onEvent({ event: "phase_complete", phase: 6, progress: 100 });
   onEvent({ event: "done", progress: 100 });
 }

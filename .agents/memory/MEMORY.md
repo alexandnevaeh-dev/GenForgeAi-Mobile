@@ -1,2 +1,1 @@
-- [API route prefix](api-route-prefix.md) — route files must NOT include `/api/` (router mounts at `/api`); misprefix → 404 not 401. Mobile fetches are app-wide relative `/api/...`.
-- [mockup-sandbox typecheck](mockup-sandbox-typecheck.md) — root `pnpm run typecheck` fails in the Canvas scaffold (pre-existing, not deployed); verify product per-package instead.
+- [Data honesty convention](data-honesty-convention.md) — never fabricate/simulate/Math.random data for authed users; honest empty/error/unpublished states; guest sim only when isGuest.

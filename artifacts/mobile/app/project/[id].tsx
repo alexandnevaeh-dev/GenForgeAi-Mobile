@@ -582,7 +582,7 @@ export default function ProjectDetailScreen() {
             <QADashboard projectId={project.id as unknown as number} />
             <PlaytestPanel projectId={project.id as unknown as number} />
             <BalanceTunerPanel projectId={project.id as unknown as number} />
-            <QualityGates />
+            <QualityGates projectId={project.id} />
           </View>
         )}
 

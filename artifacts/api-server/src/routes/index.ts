@@ -16,6 +16,7 @@ import memoryRouter from "./memory";
 import notificationsRouter from "./notifications";
 import projectChatRouter from "./projectChat";
 import projectsRouter from "./projects";
+import telemetryRouter from "./telemetry";
 import templatesRouter from "./templates";
 import usersRouter from "./users";
 
@@ -40,5 +41,6 @@ router.use(memoryRouter);
 router.use(notificationsRouter);
 router.use(projectChatRouter);
 router.use(templatesRouter);
+router.use(telemetryRouter);
 
 export default router;

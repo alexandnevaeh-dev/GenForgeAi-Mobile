@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
-import { projects } from "@workspace/db/schema";
-import { and, eq } from "drizzle-orm";
+import { assets, projects } from "@workspace/db/schema";
+import { and, count, eq } from "drizzle-orm";
 import { Router } from "express";
 import { routeTask } from "@workspace/ai-router";
 import { requireAuth } from "../middleware/requireAuth";
@@ -217,7 +217,12 @@ Make events thematic to the genre. Include launch week event, weekly challenge, 
   }
 });
 
-/* ── GET /api/projects/:id/publish/analytics ──────────────── */
+/* ── GET /api/projects/:id/publish/analytics ──────────────────
+ * Store analytics (downloads, DAU, revenue, retention, etc.) have no real
+ * data source until the game is published to a live store and an analytics
+ * provider is connected — so we never fabricate them. We return an honest
+ * "not published" state plus the project activity we *can* truthfully report.
+ */
 router.get("/projects/:id/publish/analytics", requireAuth, async (req, res) => {
   const projectId = req.params["id"] as string;
   const ownerId   = req.user!.sub;
@@ -230,45 +235,26 @@ router.get("/projects/:id/publish/analytics", requireAuth, async (req, res) => {
 
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
-  // Deterministic-ish analytics seeded by project title length for variety
-  const seed = project.title.length % 5;
-  const base = 1000 + seed * 340;
+  const [{ c: assetsGenerated }] = await db
+    .select({ c: count() })
+    .from(assets)
+    .where(eq(assets.projectId, projectId));
 
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
-    const label = d.toLocaleDateString("en", { month: "short", day: "numeric" });
-    const dau = Math.round(base * (0.7 + Math.sin(i * 0.6) * 0.3 + i * 0.02));
-    const downloads = i === 0 ? Math.round(base * 1.8) : Math.round(base * (0.4 + Math.random() * 0.4));
-    return { label, dau, downloads };
-  });
+  const published = project.status === "published";
 
   res.json({
-    overview: {
-      totalDownloads:    { value: 14820 + seed * 2100,  trend: "+18%",  up: true  },
-      dailyActiveUsers:  { value: base + seed * 120,    trend: "+7%",   up: true  },
-      avgSessionLength:  { value: "12m 34s",            trend: "+2m",   up: true  },
-      day7Retention:     { value: `${38 + seed * 3}%`,  trend: "+4%",   up: true  },
-      crashRate:         { value: `${1.2 - seed * 0.1}%`, trend: "-0.3%", up: false },
-      revenue:           { value: `$${(820 + seed * 210).toLocaleString()}`, trend: "+22%", up: true },
-      conversionRate:    { value: `${4.1 + seed * 0.4}%`, trend: "+0.6%", up: true },
-      tutorialCompletion:{ value: `${62 + seed * 4}%`,  trend: "+5%",   up: true  },
+    published,
+    message: published
+      ? "No analytics provider is connected yet. Connect a store analytics integration to see real downloads, retention, and revenue."
+      : "This game hasn't been published to a live store yet. Real store analytics (downloads, active users, retention, revenue) become available once it's published and an analytics provider is connected.",
+    projectStats: {
+      status: project.status,
+      progress: project.progress,
+      assetsGenerated,
+      isPublic: project.isPublic,
+      lastGeneratedAt: project.lastGeneratedAt,
+      createdAt: project.createdAt,
     },
-    dailySeries: days,
-    topDevices: [
-      { device: "iPhone 15 Pro",    share: 18 },
-      { device: "Samsung Galaxy S24", share: 14 },
-      { device: "Pixel 8",          share: 9  },
-      { device: "iPad Air",         share: 7  },
-      { device: "Other",            share: 52 },
-    ],
-    topCountries: [
-      { country: "United States",   share: 34 },
-      { country: "United Kingdom",  share: 12 },
-      { country: "Germany",         share: 8  },
-      { country: "Japan",           share: 7  },
-      { country: "Other",           share: 39 },
-    ],
   });
 });
 

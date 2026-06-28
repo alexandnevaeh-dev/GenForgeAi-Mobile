@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,58 +11,31 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
-interface MetricCard {
-  value: string | number;
-  trend: string;
-  up: boolean;
-}
-
-interface DayPoint {
-  label: string;
-  dau: number;
-  downloads: number;
+interface ProjectStats {
+  status: string;
+  progress: number;
+  assetsGenerated: number;
+  isPublic: boolean;
+  lastGeneratedAt: string | null;
+  createdAt: string | null;
 }
 
 interface AnalyticsData {
-  overview: Record<string, MetricCard>;
-  dailySeries: DayPoint[];
-  topDevices: { device: string; share: number }[];
-  topCountries: { country: string; share: number }[];
+  published: boolean;
+  message: string;
+  projectStats: ProjectStats;
 }
 
 interface Props {
   projectId: string;
 }
 
-const METRIC_META: Record<string, { label: string; icon: string; color: string }> = {
-  totalDownloads:     { label: "Total Downloads",    icon: "download",     color: "#2B7FFF" },
-  dailyActiveUsers:   { label: "Daily Active Users", icon: "users",        color: "#22C55E" },
-  avgSessionLength:   { label: "Avg Session",        icon: "clock",        color: "#7B2FFF" },
-  day7Retention:      { label: "Day-7 Retention",    icon: "repeat",       color: "#00D4FF" },
-  crashRate:          { label: "Crash Rate",         icon: "alert-triangle",color: "#EF4444" },
-  revenue:            { label: "Revenue",            icon: "dollar-sign",  color: "#FBBF24" },
-  conversionRate:     { label: "Conversion",         icon: "trending-up",  color: "#F97316" },
-  tutorialCompletion: { label: "Tutorial Done",      icon: "check-circle", color: "#34A853" },
-};
-
-function MiniBar({ value, max, color }: { value: number; max: number; color: string }) {
-  const pct = Math.min(100, Math.round((value / max) * 100));
-  return (
-    <View style={miniBarStyles.root}>
-      <View style={[miniBarStyles.bg]}>
-        <View style={[miniBarStyles.fill, { width: `${pct}%` as any, backgroundColor: color }]} />
-      </View>
-      <Text style={[miniBarStyles.label, { color }]}>{value}%</Text>
-    </View>
-  );
+function fmtDate(value: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
-
-const miniBarStyles = StyleSheet.create({
-  root:  { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
-  bg:    { flex: 1, height: 5, borderRadius: 3, backgroundColor: "#ffffff18", overflow: "hidden" },
-  fill:  { height: 5, borderRadius: 3 },
-  label: { fontSize: 12, fontFamily: "Inter_700Bold", minWidth: 34, textAlign: "right" },
-});
 
 export function AnalyticsDashboard({ projectId }: Props) {
   const colors = useColors();
@@ -70,23 +43,27 @@ export function AnalyticsDashboard({ projectId }: Props) {
 
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeChart, setActiveChart] = useState<"dau" | "downloads">("dau");
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    load();
-  }, [projectId]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/projects/${projectId}/publish/analytics`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      if (res.ok) setData(await res.json());
+      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      setData((await res.json()) as AnalyticsData);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load analytics");
     } finally {
       setLoading(false);
     }
-  }
+  }, [projectId, accessToken]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (loading) {
     return (
@@ -97,14 +74,26 @@ export function AnalyticsDashboard({ projectId }: Props) {
     );
   }
 
+  if (error) {
+    return (
+      <View style={[styles.errorCard, { backgroundColor: colors.destructive + "18", borderColor: colors.destructive }]}>
+        <Feather name="alert-triangle" size={14} color={colors.destructive} />
+        <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
+      </View>
+    );
+  }
+
   if (!data) return null;
 
-  const series = data.dailySeries;
-  const chartData = series.map((d) => (activeChart === "dau" ? d.dau : d.downloads));
-  const chartMax  = Math.max(...chartData, 1);
-  const chartMin  = Math.min(...chartData, 0);
-  const chartRange = chartMax - chartMin || 1;
-  const chartColor = activeChart === "dau" ? "#2B7FFF" : "#22C55E";
+  const stats = data.projectStats;
+  const statRows: { label: string; value: string; icon: string; color: string }[] = [
+    { label: "Status", value: stats.status.replace(/_/g, " "), icon: "flag", color: "#2B7FFF" },
+    { label: "Progress", value: `${stats.progress}%`, icon: "trending-up", color: "#22C55E" },
+    { label: "Assets generated", value: String(stats.assetsGenerated), icon: "image", color: "#F97316" },
+    { label: "Visibility", value: stats.isPublic ? "Public" : "Private", icon: stats.isPublic ? "globe" : "lock", color: "#7B2FFF" },
+    { label: "Last generated", value: fmtDate(stats.lastGeneratedAt), icon: "clock", color: "#00D4FF" },
+    { label: "Created", value: fmtDate(stats.createdAt), icon: "calendar", color: "#FBBF24" },
+  ];
 
   return (
     <View style={styles.root}>
@@ -113,7 +102,7 @@ export function AnalyticsDashboard({ projectId }: Props) {
         <View style={styles.headerText}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Analytics Dashboard</Text>
           <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
-            Last 14 days · Simulated pre-launch data
+            {data.published ? "Published — awaiting analytics provider" : "Not published yet"}
           </Text>
         </View>
         <Pressable onPress={load}>
@@ -121,103 +110,29 @@ export function AnalyticsDashboard({ projectId }: Props) {
         </Pressable>
       </View>
 
-      {/* Metric cards grid */}
-      <View style={styles.metricsGrid}>
-        {Object.entries(data.overview).map(([key, metric]) => {
-          const meta = METRIC_META[key];
-          if (!meta) return null;
-          return (
-            <View key={key} style={[styles.metricCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={[styles.metricIcon, { backgroundColor: meta.color + "20" }]}>
-                <Feather name={meta.icon as any} size={14} color={meta.color} />
+      {/* Honest unpublished / no-data state */}
+      <View style={[styles.noticeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.noticeIcon, { backgroundColor: colors.primary + "20" }]}>
+          <Feather name={data.published ? "link" : "upload-cloud"} size={18} color={colors.primary} />
+        </View>
+        <Text style={[styles.noticeTitle, { color: colors.foreground }]}>
+          {data.published ? "Connect an analytics provider" : "No store analytics yet"}
+        </Text>
+        <Text style={[styles.noticeText, { color: colors.mutedForeground }]}>{data.message}</Text>
+      </View>
+
+      {/* Real project activity */}
+      <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.statsTitle, { color: colors.foreground }]}>Project Activity</Text>
+        {statRows.map((row) => (
+          <View key={row.label} style={[styles.statRow, { borderColor: colors.border }]}>
+            <View style={styles.statLeft}>
+              <View style={[styles.statIcon, { backgroundColor: row.color + "20" }]}>
+                <Feather name={row.icon as any} size={13} color={row.color} />
               </View>
-              <Text style={[styles.metricValue, { color: colors.foreground }]}>{String(metric.value)}</Text>
-              <Text style={[styles.metricLabel, { color: colors.mutedForeground }]}>{meta.label}</Text>
-              <View style={[styles.trendChip, { backgroundColor: metric.up ? "#22C55E18" : "#EF444418" }]}>
-                <Feather name={metric.up ? "trending-up" : "trending-down"} size={10} color={metric.up ? "#22C55E" : "#EF4444"} />
-                <Text style={[styles.trendText, { color: metric.up ? "#22C55E" : "#EF4444" }]}>{metric.trend}</Text>
-              </View>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{row.label}</Text>
             </View>
-          );
-        })}
-      </View>
-
-      {/* Mini chart */}
-      <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={styles.chartHeader}>
-          <Text style={[styles.chartTitle, { color: colors.foreground }]}>14-Day Trend</Text>
-          <View style={styles.chartToggle}>
-            {(["dau", "downloads"] as const).map((t) => (
-              <Pressable
-                key={t}
-                onPress={() => setActiveChart(t)}
-                style={[styles.toggleChip, {
-                  backgroundColor: activeChart === t ? chartColor + "20" : "transparent",
-                  borderColor: activeChart === t ? chartColor : colors.border,
-                }]}
-              >
-                <Text style={[styles.toggleText, { color: activeChart === t ? chartColor : colors.mutedForeground }]}>
-                  {t === "dau" ? "DAU" : "Downloads"}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.barChart}>
-          {chartData.map((v, i) => {
-            const heightPct = ((v - chartMin) / chartRange) * 100;
-            const isLast = i === chartData.length - 1;
-            return (
-              <View key={i} style={styles.barCol}>
-                <View style={styles.barSlot}>
-                  <View style={[
-                    styles.bar,
-                    {
-                      height: `${Math.max(6, heightPct)}%` as any,
-                      backgroundColor: isLast ? chartColor : chartColor + "77",
-                      borderRadius: 3,
-                    }
-                  ]} />
-                </View>
-                {(i === 0 || i === 6 || i === 13) && (
-                  <Text style={[styles.barLabel, { color: colors.mutedForeground }]}>
-                    {series[i]?.label.split(" ")[0] ?? ""}
-                  </Text>
-                )}
-              </View>
-            );
-          })}
-        </View>
-
-        <View style={styles.chartLegend}>
-          <Text style={[styles.legendMin, { color: colors.mutedForeground }]}>
-            Min: {chartMin.toLocaleString()}
-          </Text>
-          <Text style={[styles.legendMax, { color: chartColor }]}>
-            Peak: {chartMax.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-
-      {/* Devices */}
-      <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.listTitle, { color: colors.foreground }]}>Top Devices</Text>
-        {data.topDevices.map((d, i) => (
-          <View key={i} style={styles.listRow}>
-            <Text style={[styles.listLabel, { color: colors.foreground }]}>{d.device}</Text>
-            <MiniBar value={d.share} max={data.topDevices[0]?.share ?? 100} color={colors.primary} />
-          </View>
-        ))}
-      </View>
-
-      {/* Countries */}
-      <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.listTitle, { color: colors.foreground }]}>Top Countries</Text>
-        {data.topCountries.map((c, i) => (
-          <View key={i} style={styles.listRow}>
-            <Text style={[styles.listLabel, { color: colors.foreground }]}>{c.country}</Text>
-            <MiniBar value={c.share} max={data.topCountries[0]?.share ?? 100} color="#7B2FFF" />
+            <Text style={[styles.statValue, { color: colors.foreground }]}>{row.value}</Text>
           </View>
         ))}
       </View>
@@ -229,33 +144,21 @@ const styles = StyleSheet.create({
   root:         { gap: 12 },
   loadingCard:  { alignItems: "center", gap: 10, padding: 32, borderRadius: 14, borderWidth: 1 },
   loadingText:  { fontSize: 13, fontFamily: "Inter_400Regular" },
+  errorCard:    { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, padding: 12 },
+  errorText:    { fontSize: 12, fontFamily: "Inter_400Regular", flex: 1 },
   headerCard:   { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1, padding: 14 },
   headerText:   { flex: 1, gap: 2 },
   headerTitle:  { fontSize: 15, fontFamily: "Inter_700Bold" },
   headerSub:    { fontSize: 12, fontFamily: "Inter_400Regular" },
-  metricsGrid:  { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  metricCard:   { width: "47%", borderRadius: 12, borderWidth: 1, padding: 12, gap: 4, alignItems: "flex-start" },
-  metricIcon:   { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 4 },
-  metricValue:  { fontSize: 18, fontFamily: "Inter_700Bold" },
-  metricLabel:  { fontSize: 11, fontFamily: "Inter_400Regular" },
-  trendChip:    { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 5, marginTop: 2 },
-  trendText:    { fontSize: 10, fontFamily: "Inter_700Bold" },
-  chartCard:    { borderRadius: 14, borderWidth: 1, padding: 16, gap: 12 },
-  chartHeader:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  chartTitle:   { fontSize: 14, fontFamily: "Inter_700Bold" },
-  chartToggle:  { flexDirection: "row", gap: 6 },
-  toggleChip:   { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, borderWidth: 1 },
-  toggleText:   { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  barChart:     { flexDirection: "row", alignItems: "flex-end", height: 80, gap: 3 },
-  barCol:       { flex: 1, alignItems: "center", gap: 4 },
-  barSlot:      { flex: 1, width: "100%", justifyContent: "flex-end" },
-  bar:          { width: "100%" },
-  barLabel:     { fontSize: 9, fontFamily: "Inter_400Regular" },
-  chartLegend:  { flexDirection: "row", justifyContent: "space-between" },
-  legendMin:    { fontSize: 11, fontFamily: "Inter_400Regular" },
-  legendMax:    { fontSize: 11, fontFamily: "Inter_700Bold" },
-  listCard:     { borderRadius: 14, borderWidth: 1, padding: 14, gap: 10 },
-  listTitle:    { fontSize: 14, fontFamily: "Inter_700Bold" },
-  listRow:      { flexDirection: "row", alignItems: "center", gap: 10 },
-  listLabel:    { fontSize: 12, fontFamily: "Inter_400Regular", width: 120 },
+  noticeCard:   { alignItems: "center", gap: 8, borderRadius: 14, borderWidth: 1, padding: 20 },
+  noticeIcon:   { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  noticeTitle:  { fontSize: 15, fontFamily: "Inter_600SemiBold", textAlign: "center" },
+  noticeText:   { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18 },
+  statsCard:    { borderRadius: 14, borderWidth: 1, padding: 14, gap: 4 },
+  statsTitle:   { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  statRow:      { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 10, borderTopWidth: 0.5 },
+  statLeft:     { flexDirection: "row", alignItems: "center", gap: 10 },
+  statIcon:     { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  statLabel:    { fontSize: 13, fontFamily: "Inter_400Regular" },
+  statValue:    { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 });
