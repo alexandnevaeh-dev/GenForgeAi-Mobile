@@ -1,14 +1,10 @@
-import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useCallback, useEffect, useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Image,
-  Modal,
+  Animated,
+  Easing,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -19,14 +15,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AssetCreatorModal, { type CreatedAsset } from "@/components/AssetCreatorModal";
 import SpriteSheetToolsModal from "@/components/SpriteSheetToolsModal";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { ArtDisplayCard } from "@/components/gallery/ArtDisplayCard";
+import { CrystalCategoryChip } from "@/components/gallery/CrystalCategoryChip";
+import { GalleryEmptyState } from "@/components/gallery/GalleryEmptyState";
+import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
+import { GalleryLoadingSkeleton } from "@/components/gallery/GalleryLoadingSkeleton";
+import { MagicFAB } from "@/components/gallery/MagicFAB";
+import { RuneFilterChip } from "@/components/gallery/RuneFilterChip";
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
 
-const { width: SCREEN_W } = Dimensions.get("window");
+// ─── Types & Constants ────────────────────────────────────────────────────────
 
 type AssetCategory = "all" | "cover" | "character" | "boss" | "environment";
 
-const FILTERS: { label: string; value: AssetCategory; icon: string }[] = [
+const FILTERS: { label: string; value: AssetCategory; icon: React.ComponentProps<typeof import("@expo/vector-icons").Feather>["name"] }[] = [
   { label: "All",         value: "all",         icon: "grid" },
   { label: "Cover Art",   value: "cover",        icon: "image" },
   { label: "Characters",  value: "character",    icon: "user" },
@@ -40,14 +43,6 @@ const CATEGORY_COLOR: Record<AssetCategory, string> = {
   character:   "#2B7FFF",
   boss:        "#EF4444",
   environment: "#22C55E",
-};
-
-const CATEGORY_ICON: Record<AssetCategory, string> = {
-  all:         "grid",
-  cover:       "image",
-  character:   "user",
-  boss:        "shield",
-  environment: "map",
 };
 
 export interface ApiAsset {
@@ -74,12 +69,42 @@ function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+// ─── Gallery Title with shimmer ───────────────────────────────────────────────
+
+function GalleryTitle() {
+  const shimmerX = useRef(new Animated.Value(-60)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.delay(4000),
+        Animated.timing(shimmerX, { toValue: 160, duration: 800, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shimmerX, { toValue: -60, duration: 0, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [shimmerX]);
+  return (
+    <View style={title.wrap}>
+      <Text style={title.text}>Assets</Text>
+      <Animated.View style={[title.shimmer, { transform: [{ translateX: shimmerX }] }]} pointerEvents="none">
+        <LinearGradient
+          colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.45)", "rgba(255,255,255,0)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function AssetsScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { accessToken, user } = useAuth();
   const isGuest = !accessToken || user?.id === "guest";
 
+  // ── All existing state — unchanged ────────────────────────────────────────
   const [allAssets, setAllAssets] = useState<ApiAsset[]>([]);
   const [activeFilter, setActiveFilter] = useState<AssetCategory>("all");
   const [loading, setLoading] = useState(true);
@@ -95,6 +120,8 @@ export default function AssetsScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
+  // ── All existing callbacks — unchanged ────────────────────────────────────
+
   const fetchAssets = useCallback(async () => {
     if (isGuest) { setLoading(false); return; }
     try {
@@ -103,7 +130,6 @@ export default function AssetsScreen() {
       });
       if (!res.ok) throw new Error("Failed to load assets");
       const data = (await res.json()) as { assets: ApiAsset[] };
-      // Filter out data URLs (legacy base64 assets that can't be displayed efficiently)
       setAllAssets(data.assets.filter((a) => !a.url?.startsWith("data:")));
       setError(null);
     } catch (err) {
@@ -145,6 +171,7 @@ export default function AssetsScreen() {
       setAllAssets((prev) => prev.map((a) => a.id === asset.id ? { ...a, ...data.asset } : a));
       setLightbox((l) => l?.id === asset.id ? { ...l, ...data.asset } : l);
     } catch (err) {
+      const { Alert } = await import("react-native");
       Alert.alert("Regeneration Failed", err instanceof Error ? err.message : "Unknown error");
     } finally {
       setRegenLoading(false);
@@ -152,6 +179,7 @@ export default function AssetsScreen() {
   }, [accessToken]);
 
   const handleDelete = useCallback(async (asset: ApiAsset) => {
+    const { Alert } = await import("react-native");
     Alert.alert("Delete Asset", `Delete "${asset.name}"? This cannot be undone.`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -198,6 +226,8 @@ export default function AssetsScreen() {
     setActiveFilter("all");
   }, []);
 
+  // ── Derived state — unchanged ──────────────────────────────────────────────
+
   const filtered = activeFilter === "all"
     ? allAssets
     : allAssets.filter((a) => a.category === activeFilter);
@@ -208,402 +238,194 @@ export default function AssetsScreen() {
   const catColor = (cat: string): string => CATEGORY_COLOR[(cat as AssetCategory)] ?? "#2B7FFF";
   const canRegen = (cat: string) => ["cover", "character", "boss", "environment"].includes(cat);
 
+  // ─── Render ──────────────────────────────────────────────────────────────
+
   return (
     <>
-    {/* ── Asset Creator Modal ───────────────────────────────────────────── */}
-    <AssetCreatorModal
-      visible={creatorVisible}
-      onClose={() => setCreatorVisible(false)}
-      onCreated={handleAssetCreated}
-    />
+      {/* ── Asset Creator Modal ─────────────────────────────────────────── */}
+      <AssetCreatorModal
+        visible={creatorVisible}
+        onClose={() => setCreatorVisible(false)}
+        onCreated={handleAssetCreated}
+      />
 
-    {/* ── Sprite Sheet Tools Modal ──────────────────────────────────────── */}
-    <SpriteSheetToolsModal
-      visible={!!spriteToolsAsset}
-      asset={spriteToolsAsset}
-      onClose={() => setSpriteToolsAsset(null)}
-      onSliced={handleSliced}
-    />
+      {/* ── Sprite Sheet Tools Modal ────────────────────────────────────── */}
+      <SpriteSheetToolsModal
+        visible={!!spriteToolsAsset}
+        asset={spriteToolsAsset}
+        onClose={() => setSpriteToolsAsset(null)}
+        onSliced={handleSliced}
+      />
 
-    {/* ── Floating Action Button ────────────────────────────────────────── */}
-    {!isGuest && (
-      <Pressable
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setCreatorVisible(true); }}
-        style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad - 56 }]}
-      >
-        <Feather name="plus" size={22} color="#fff" />
-      </Pressable>
-    )}
+      {/* ── Immersive Lightbox ──────────────────────────────────────────── */}
+      <GalleryLightbox
+        visible={!!lightbox}
+        asset={lightbox}
+        onClose={() => setLightbox(null)}
+        onFavorite={(a) => void handleFavorite(a)}
+        onRegenerate={(a) => void handleRegenerate(a)}
+        onOpenSpriteTools={(a) => setSpriteToolsAsset(a)}
+        onDelete={(a) => void handleDelete(a)}
+        regenLoading={regenLoading}
+        deleteLoading={deleteLoading}
+        canRegen={canRegen}
+      />
 
-    {/* ── Asset Lightbox Modal ─────────────────────────────────────────── */}
-    <Modal
-      visible={!!lightbox}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setLightbox(null)}
-    >
-      {lightbox && (
-        <View style={styles.lightboxOverlay}>
-          {/* Header */}
-          <View style={[styles.lightboxHeader]}>
-            <Pressable onPress={() => setLightbox(null)} style={styles.lightboxClose}>
-              <Feather name="x" size={22} color="#fff" />
-            </Pressable>
-            <View style={styles.lightboxMeta}>
-              <Text style={styles.lightboxName} numberOfLines={1}>{lightbox.name}</Text>
-              <Text style={styles.lightboxSub}>
-                {lightbox.category.toUpperCase()} · {timeAgo(lightbox.createdAt)}
-              </Text>
+      {/* ── Magic Forge FAB ─────────────────────────────────────────────── */}
+      {!isGuest && (
+        <MagicFAB
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setCreatorVisible(true);
+          }}
+          bottom={bottomPad - 56}
+        />
+      )}
+
+      {/* ── Main gallery view ───────────────────────────────────────────── */}
+      <View style={s.root}>
+        <AnimatedBackground />
+        <LinearGradient
+          colors={["rgba(11,9,20,0.95)", "rgba(11,9,20,0.84)"]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
+        <ScrollView
+          style={s.scroll}
+          contentContainerStyle={{ paddingTop: topPad, paddingBottom: bottomPad }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3B8FFF"
+            />
+          }
+        >
+          <View style={s.inner}>
+            {/* Metallic shimmer title */}
+            <GalleryTitle />
+
+            {/* Crystal category stat chips */}
+            {!isGuest && !loading && allAssets.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={s.statsRow}
+                contentContainerStyle={s.statsContent}
+              >
+                {(["cover", "character", "boss", "environment"] as AssetCategory[])
+                  .filter((c) => counts[c])
+                  .map((c) => (
+                    <CrystalCategoryChip
+                      key={c}
+                      color={catColor(c)}
+                      count={counts[c]}
+                      label={c.charAt(0).toUpperCase() + c.slice(1)}
+                    />
+                  ))}
+              </ScrollView>
+            )}
+
+            {/* Enchanted rune filter chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={s.filterRow}
+              contentContainerStyle={s.filterContent}
+            >
+              {FILTERS.map((f) => (
+                <RuneFilterChip
+                  key={f.value}
+                  label={f.label}
+                  icon={f.icon}
+                  active={activeFilter === f.value}
+                  onPress={() => setActiveFilter(f.value)}
+                />
+              ))}
+            </ScrollView>
+
+            {/* Rune divider */}
+            <View style={s.divider}>
+              <View style={s.divLine} />
+              <View style={s.divDot} />
+              <View style={s.divLine} />
             </View>
-            <Pressable onPress={() => void handleFavorite(lightbox)} style={styles.lightboxFav}>
-              <Feather
-                name={lightbox.isFavorite ? "heart" : "heart"}
-                size={22}
-                color={lightbox.isFavorite ? "#EF4444" : "#ffffff88"}
-              />
-            </Pressable>
-          </View>
 
-          {/* Image */}
-          <View style={styles.lightboxImgWrap}>
-            {lightbox.url ? (
-              <Image
-                source={{ uri: lightbox.url }}
-                style={styles.lightboxImg}
-                resizeMode="contain"
-              />
+            {/* Content area */}
+            {loading ? (
+              <GalleryLoadingSkeleton />
+            ) : isGuest ? (
+              <GalleryEmptyState variant="guest" />
+            ) : error ? (
+              <GalleryEmptyState variant="error" errorMessage={error} />
+            ) : filtered.length === 0 ? (
+              allAssets.length === 0 ? (
+                <GalleryEmptyState
+                  variant="empty"
+                  onGeneratePress={() => setCreatorVisible(true)}
+                />
+              ) : (
+                <GalleryEmptyState
+                  variant="filtered"
+                  filterName={FILTERS.find((f) => f.value === activeFilter)?.label}
+                />
+              )
             ) : (
-              <View style={styles.lightboxNoImg}>
-                <Feather name="image" size={40} color="#ffffff44" />
-                <Text style={{ color: "#ffffff66", marginTop: 8 }}>No image</Text>
+              <View style={s.grid}>
+                {filtered.map((asset) => (
+                  <ArtDisplayCard
+                    key={asset.id}
+                    asset={asset}
+                    onPress={() => setLightbox(asset)}
+                    onFavorite={() => void handleFavorite(asset)}
+                  />
+                ))}
               </View>
             )}
           </View>
-
-          {/* Tags */}
-          {lightbox.tags && lightbox.tags.length > 0 && (
-            <View style={styles.lightboxTags}>
-              {lightbox.tags.map((t) => (
-                <View key={t} style={styles.lightboxTag}>
-                  <Text style={styles.lightboxTagText}>{t}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Actions */}
-          <View style={styles.lightboxActions}>
-            {canRegen(lightbox.category) && (
-              <Pressable
-                onPress={() => void handleRegenerate(lightbox)}
-                disabled={regenLoading}
-                style={[styles.lightboxBtn, { backgroundColor: "#2B7FFF" }]}
-              >
-                {regenLoading
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <><Feather name="refresh-cw" size={15} color="#fff" /><Text style={styles.lightboxBtnText}>Regenerate</Text></>}
-              </Pressable>
-            )}
-            {!!lightbox.url && !lightbox.url.startsWith("data:") && (
-              <Pressable
-                onPress={() => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSpriteToolsAsset(lightbox);
-                  setLightbox(null);
-                }}
-                style={[styles.lightboxBtn, { backgroundColor: "#7B2FFF" }]}
-              >
-                <Feather name="film" size={15} color="#fff" />
-                <Text style={styles.lightboxBtnText}>Frames</Text>
-              </Pressable>
-            )}
-            <Pressable
-              onPress={() => void handleDelete(lightbox)}
-              disabled={deleteLoading}
-              style={[styles.lightboxBtn, { backgroundColor: "#EF444422", borderWidth: 1, borderColor: "#EF4444" }]}
-            >
-              {deleteLoading
-                ? <ActivityIndicator size="small" color="#EF4444" />
-                : <><Feather name="trash-2" size={15} color="#EF4444" /><Text style={[styles.lightboxBtnText, { color: "#EF4444" }]}>Delete</Text></>}
-            </Pressable>
-          </View>
-        </View>
-      )}
-    </Modal>
-
-    <ScrollView
-      style={[styles.scroll, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: topPad, paddingBottom: bottomPad }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-      }
-    >
-      <View style={styles.inner}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Assets</Text>
-
-        {/* Stats row */}
-        {!isGuest && !loading && allAssets.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsRow}>
-            {(["cover", "character", "boss", "environment"] as AssetCategory[])
-              .filter((c) => counts[c])
-              .map((c) => (
-                <View key={c} style={[styles.statChip, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={[styles.statDot, { backgroundColor: catColor(c) }]} />
-                  <Text style={[styles.statCount, { color: colors.foreground }]}>{counts[c]}</Text>
-                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </Text>
-                </View>
-              ))}
-          </ScrollView>
-        )}
-
-        {/* Filter chips */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          {FILTERS.map((f) => (
-            <Pressable
-              key={f.value}
-              onPress={() => setActiveFilter(f.value)}
-              style={[
-                styles.filterChip,
-                {
-                  backgroundColor: activeFilter === f.value ? colors.primary : colors.card,
-                  borderColor: activeFilter === f.value ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <Feather
-                name={f.icon as any}
-                size={13}
-                color={activeFilter === f.value ? "#fff" : colors.mutedForeground}
-              />
-              <Text style={[styles.filterText, { color: activeFilter === f.value ? "#fff" : colors.mutedForeground }]}>
-                {f.label}
-              </Text>
-            </Pressable>
-          ))}
         </ScrollView>
-
-        {/* Content */}
-        {loading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
-        ) : isGuest ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="lock" size={28} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign in to see your assets</Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              Generated images are saved to your account. Create a game to start building your asset library.
-            </Text>
-          </View>
-        ) : error ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="alert-circle" size={28} color="#EF4444" />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Couldn't load assets</Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>{error}</Text>
-          </View>
-        ) : filtered.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="image" size={28} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              {allAssets.length === 0 ? "No assets yet" : "No assets in this category"}
-            </Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              {allAssets.length === 0
-                ? "Generate a game project to create your first sprites and concept art."
-                : "Try a different filter to see your assets."}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            {filtered.map((asset) => (
-              <AssetCard
-                key={asset.id}
-                asset={asset}
-                colors={colors}
-                catColor={catColor}
-                onPress={() => setLightbox(asset)}
-                onFavorite={() => void handleFavorite(asset)}
-              />
-            ))}
-          </View>
-        )}
       </View>
-    </ScrollView>
     </>
   );
 }
 
-function AssetCard({
-  asset,
-  colors,
-  catColor,
-  onPress,
-  onFavorite,
-}: {
-  asset: ApiAsset;
-  colors: ReturnType<typeof useColors>;
-  catColor: (c: string) => string;
-  onPress: () => void;
-  onFavorite: () => void;
-}) {
-  const [imgError, setImgError] = useState(false);
-  const color = catColor(asset.category);
-  const icon = CATEGORY_ICON[(asset.category as AssetCategory)] ?? "image";
-  const hasImage = !!asset.url && !imgError && !asset.url.startsWith("data:");
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.assetCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-    >
-      {/* Thumbnail */}
-      <View style={[styles.thumb, { backgroundColor: colors.muted }]}>
-        {hasImage ? (
-          <Image
-            source={{ uri: asset.url! }}
-            style={styles.thumbImage}
-            resizeMode="cover"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <View style={[styles.thumbFallback, { backgroundColor: color + "22" }]}>
-            <Feather name={icon as any} size={24} color={color} />
-          </View>
-        )}
-        {/* Favorite badge */}
-        {asset.isFavorite && (
-          <View style={styles.favBadge}>
-            <Feather name="heart" size={10} color="#EF4444" />
-          </View>
-        )}
-      </View>
-
-      {/* Meta */}
-      <View style={styles.assetMeta}>
-        <View style={[styles.categoryChip, { backgroundColor: color + "22" }]}>
-          <Text style={[styles.categoryChipText, { color }]}>
-            {asset.category.toUpperCase()}
-          </Text>
-        </View>
-        <Text style={[styles.assetName, { color: colors.foreground }]} numberOfLines={2}>
-          {asset.name}
-        </Text>
-        <Text style={[styles.assetTime, { color: colors.mutedForeground }]}>
-          {timeAgo(asset.createdAt)}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  inner: { paddingHorizontal: 20, gap: 16 },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
-  statsRow: { marginHorizontal: -20, paddingHorizontal: 20 },
-  statChip: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginRight: 8,
+const title = StyleSheet.create({
+  wrap: { overflow: "hidden", alignSelf: "flex-start" },
+  text: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.3,
+    color: "#C0B8E0",
+    textShadowColor: "rgba(140,120,255,0.3)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
-  statDot: { width: 7, height: 7, borderRadius: 4 },
-  statCount: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  filterRow: { marginHorizontal: -20, paddingHorizontal: 20 },
-  filterChip: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, marginRight: 8,
-  },
-  filterText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  center: { alignItems: "center", paddingVertical: 60 },
-  emptyCard: { borderRadius: 16, borderWidth: 1, padding: 32, alignItems: "center", gap: 12 },
-  emptyTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  emptyBody: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  assetCard: { width: "47%", borderRadius: 14, borderWidth: 1, overflow: "hidden" },
-  thumb: { width: "100%", aspectRatio: 1 },
-  thumbImage: { width: "100%", height: "100%" },
-  thumbFallback: { flex: 1, alignItems: "center", justifyContent: "center" },
-  favBadge: {
-    position: "absolute", top: 6, right: 6,
-    width: 20, height: 20, borderRadius: 10,
-    backgroundColor: "#ffffff22", alignItems: "center", justifyContent: "center",
-  },
-  assetMeta: { padding: 10, gap: 4 },
-  categoryChip: { alignSelf: "flex-start", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  categoryChipText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-  assetName: { fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 16 },
-  assetTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  // Lightbox
-  lightboxOverlay: {
-    flex: 1,
-    backgroundColor: "#000000EE",
-    justifyContent: "space-between",
-  },
-  lightboxHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    gap: 12,
-  },
-  lightboxClose: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  lightboxMeta: { flex: 1 },
-  lightboxName: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#fff" },
-  lightboxSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#ffffff88" },
-  lightboxFav: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  lightboxImgWrap: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  lightboxImg: { width: SCREEN_W - 32, height: SCREEN_W - 32 },
-  lightboxNoImg: { alignItems: "center", justifyContent: "center" },
-  lightboxTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-  },
-  lightboxTag: {
-    borderRadius: 6,
-    backgroundColor: "#ffffff15",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  lightboxTagText: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#ffffff99" },
-  lightboxActions: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingBottom: 50,
-  },
-  lightboxBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  lightboxBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
-  fab: {
+  shimmer: {
     position: "absolute",
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#2B7FFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-    zIndex: 100,
+    top: 0,
+    bottom: 0,
+    width: 60,
+    transform: [{ skewX: "-15deg" }],
   },
+});
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#0B0914" },
+  scroll: { flex: 1 },
+  inner: { paddingHorizontal: 20, gap: 14 },
+
+  statsRow: { marginHorizontal: -20 },
+  statsContent: { paddingHorizontal: 20 },
+  filterRow: { marginHorizontal: -20 },
+  filterContent: { paddingHorizontal: 20 },
+
+  divider: { flexDirection: "row", alignItems: "center", gap: 8, marginVertical: 2 },
+  divLine: { flex: 1, height: 1, backgroundColor: "rgba(42,38,64,0.5)" },
+  divDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: "#2A2448", transform: [{ rotate: "45deg" }] },
+
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingBottom: 8 },
 });

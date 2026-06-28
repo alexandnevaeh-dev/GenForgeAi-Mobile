@@ -1,0 +1,587 @@
+GenForgeAI Mobile UI Overhaul – Phase 5
+
+Assets Screen – The Arcane Gallery
+
+Objective
+
+Redesign only the Assets screen ("app/(tabs)/assets.tsx") and its related asset modals into a premium, animated Arcane Gallery where every generated asset feels like a collectible masterpiece.
+
+Do not change any existing functionality. Preserve all APIs, contexts, navigation, state management, asset generation, sprite slicing, export logic, authentication, and business rules.
+
+---
+
+Theme
+
+The Assets section should resemble an enchanted museum where AI-generated artwork is displayed on magical pedestals inside an ancient gallery.
+
+Visual inspiration:
+
+- Grand art gallery
+- Crystal display cases
+- Ancient stone halls
+- Floating paintings
+- Magical lighting
+- Animated runes
+- Gold trim
+- Arcane vault
+
+---
+
+Animated Background
+
+Replace the flat background with layered scenery.
+
+Layers:
+
+- Gallery walls
+- Giant arched windows
+- Floating artwork
+- Crystal displays
+- Dust particles
+- Blue magical mist
+- Light rays
+
+Use subtle parallax throughout.
+
+---
+
+Header
+
+Keep:
+
+- Assets title
+
+Redesign visually.
+
+Title:
+
+- Metallic engraved lettering
+- Blue magical glow
+- Slow shimmer animation
+
+---
+
+Statistics Chips
+
+Maintain existing logic.
+
+Redesign visually.
+
+Each chip becomes a crystal category badge.
+
+Examples:
+
+Cover
+
+Characters
+
+Bosses
+
+Worlds
+
+Features:
+
+- Colored crystal
+- Animated glow
+- Smooth selection animation
+- Floating effect
+
+---
+
+Category Filters
+
+Maintain behavior.
+
+Each category appears as an enchanted rune.
+
+Selected:
+
+Blue magical glow
+
+Idle:
+
+Stone appearance
+
+Press:
+
+Scale animation
+
+Ripple effect
+
+---
+
+Asset Grid
+
+The gallery is the centerpiece.
+
+Each AssetCard becomes an illuminated display frame.
+
+Include:
+
+Artwork preview
+
+Decorative fantasy frame
+
+Favorite crystal
+
+Category badge
+
+Asset name
+
+Creation date
+
+Animated hover
+
+Shadow depth
+
+Light shimmer
+
+Loaded images fade smoothly into view.
+
+---
+
+Artwork Presentation
+
+Images should appear inside premium fantasy frames.
+
+Support:
+
+Pixel Art
+
+Fantasy
+
+Sci-Fi
+
+Anime
+
+UI Icons
+
+Concept Art
+
+Backgrounds
+
+Portraits
+
+Large images should use graceful cropping while preserving aspect ratio.
+
+---
+
+Favorites
+
+Heart badge becomes a magical crystal.
+
+Favoriting animation:
+
+Crystal fills
+
+Glow expands
+
+Small particle burst
+
+No functional changes.
+
+---
+
+Floating Action Button
+
+Keep existing behavior.
+
+Redesign into a magical forge crystal.
+
+Features:
+
+Blue energy
+
+Pulse animation
+
+Glow
+
+Ripple
+
+Floating shadow
+
+Press scale
+
+---
+
+Lightbox Modal
+
+Transform into an immersive artwork viewer.
+
+Background:
+
+Deep black with subtle magical fog
+
+Header:
+
+Animated Close button
+
+Asset title
+
+Category badge
+
+Favorite crystal
+
+Artwork:
+
+Large floating display
+
+Soft light rays
+
+Decorative frame
+
+Slow zoom breathing animation
+
+---
+
+Tags
+
+Each tag becomes an engraved rune chip.
+
+Selected tags glow softly.
+
+---
+
+Action Buttons
+
+Maintain functionality.
+
+Visual redesign:
+
+Regenerate
+
+Large blue crystal button
+
+Animated energy pulse
+
+Frames
+
+Purple rune button
+
+Animated gears
+
+Delete
+
+Red engraved stone button
+
+Confirmation modal receives fantasy styling.
+
+---
+
+Asset Creator Modal
+
+Keep every option and API call.
+
+Redesign as an Arcane Creation Chamber.
+
+Sections:
+
+Asset Category
+
+Art Style
+
+Prompt
+
+Quality
+
+Preview
+
+Generate
+
+Each section should appear inside magical panels.
+
+Dropdowns become crystal selectors.
+
+Prompt box:
+
+Dark magical glass
+
+Blue border
+
+Animated focus
+
+Generate button:
+
+Large forge crystal
+
+Energy animation while generating
+
+Loading:
+
+Animated magical forge
+
+Floating sparks
+
+Progress ring
+
+---
+
+Live Preview
+
+Once generation completes:
+
+Artwork fades in
+
+Crystal flash
+
+Gentle zoom
+
+Confirmation animation
+
+---
+
+Sprite Sheet Tools
+
+Transform into the Rune Animation Workshop.
+
+Maintain all existing slicing functionality.
+
+Sections:
+
+Grid Configuration
+
+Animation Preview
+
+Frame Browser
+
+Export
+
+---
+
+Grid Configuration
+
+Controls become magical steppers.
+
+Rows
+
+Columns
+
+Margin
+
+Spacing
+
+Animated crystal buttons.
+
+---
+
+Animation Preview
+
+Display frames inside a magical projection crystal.
+
+Play button
+
+Large glowing rune
+
+FPS control
+
+Crystal slider
+
+Frame counter
+
+Floating badge
+
+---
+
+Frame Browser
+
+Each frame becomes a miniature enchanted tile.
+
+Selected frame:
+
+Blue magical border
+
+Glow
+
+Scale animation
+
+---
+
+Export Section
+
+Display export options inside a magical portal.
+
+Export button:
+
+Purple energy
+
+Portal animation
+
+Completion:
+
+Portal closes
+
+Success glow
+
+---
+
+Empty State
+
+If no assets exist:
+
+Display:
+
+Empty gallery
+
+Covered pedestal
+
+Floating crystal
+
+Soft lighting
+
+Primary button:
+
+Generate First Asset
+
+Large magical crystal
+
+Animated glow
+
+---
+
+Guest State
+
+Maintain logic.
+
+Visual redesign:
+
+Locked vault
+
+Blue magical lock
+
+Premium sign-in CTA
+
+---
+
+Loading State
+
+Replace skeletons with animated empty display frames.
+
+Soft shimmer
+
+Blueprint pattern
+
+Glowing borders
+
+---
+
+Ambient Effects
+
+Gallery-wide:
+
+Floating dust
+
+Soft fog
+
+Blue magical particles
+
+Light rays
+
+Occasional crystal sparkle
+
+Keep effects lightweight.
+
+---
+
+Reusable Components
+
+Create reusable components where appropriate:
+
+GalleryFrame
+
+CrystalCategoryChip
+
+MagicFAB
+
+RuneButton
+
+ArtDisplayCard
+
+AssetPreviewPanel
+
+MagicProgressRing
+
+FantasyModalHeader
+
+These should be reusable in later phases.
+
+---
+
+Performance
+
+Target:
+
+60 FPS
+
+Lazy load artwork
+
+Cache generated images
+
+Virtualized asset grid
+
+GPU-friendly animations
+
+Memoized cards
+
+Minimal rerenders
+
+---
+
+Accessibility
+
+Support:
+
+Reduced motion
+
+Screen readers
+
+High contrast
+
+Large touch targets
+
+Dynamic text sizing
+
+---
+
+Preserve Completely
+
+Asset generation
+
+Asset APIs
+
+Sprite slicing
+
+Frame animation logic
+
+Export logic
+
+Favorites
+
+Authentication
+
+Navigation
+
+Providers
+
+Contexts
+
+Business logic
+
+Routing
+
+State management
+
+---
+
+Deliverables
+
+When complete provide:
+
+- Files modified
+- New reusable components
+- Animation systems added
+- Artwork placeholders required
+- Performance optimizations
+- Asset caching improvements
+- Remaining placeholders for future phases
+
+Do not modify any screens other than the Assets screen and its related asset modals.
