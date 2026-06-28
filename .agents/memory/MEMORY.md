@@ -1,8 +1,2 @@
-- [AI Router Architecture](ai-router-architecture.md) — task-aware model routing via OpenRouter free tier; workspace lib exports must point to ./src/index.ts not ./dist/ for esbuild compatibility.
-- [Background job system](background-jobs.md) — in-process queue (no Redis), DB-persisted via `jobs` table, 2 concurrent; generate handler registered in app.ts via registerHandler("generate", …).
-- [Generation pipeline split](generation-pipeline.md) — SSE and async endpoints both call lib/generator.ts; never duplicate pipeline logic between routes.
-- [Agent memory system](agent-memory.md) — agent_memories table stores per-project/per-agent key/value facts; generator reads on start, writes after each phase; REST at /api/projects/:id/memory.
-- [Notifications system](notifications.md) — notifications table; jobQueue writes on job complete/fail; REST at /api/notifications; mobile NotificationsProvider polls every 30s; bell badge + modal panel on home screen.
-- [Project-aware chat](project-chat.md) — POST /api/projects/:id/chat injects blueprint+memories+assets into system prompt then streams SSE; chat tab in project detail renders outside the outer ScrollView (owns its own FlatList).
-- [Asset image storage](asset-storage.md) — GCS bucket provisioned via setupObjectStorage(); imageGen.ts uploads buffers server-side, returns persistent HTTPS URLs; imgCtx stored in asset.metadata for per-asset regeneration; POST /api/assets/:id/regenerate re-runs generator by category.
-- [Marketplace & Templates](marketplace-templates.md) — templates table seeded at startup via seedTemplates(); GET /api/templates (public) + POST /api/templates/:id/use (auth) creates project + enqueues generate job; mobile screen at app/marketplace.tsx.
+- [API route prefix](api-route-prefix.md) — route files must NOT include `/api/` (router mounts at `/api`); misprefix → 404 not 401. Mobile fetches are app-wide relative `/api/...`.
+- [mockup-sandbox typecheck](mockup-sandbox-typecheck.md) — root `pnpm run typecheck` fails in the Canvas scaffold (pre-existing, not deployed); verify product per-package instead.
